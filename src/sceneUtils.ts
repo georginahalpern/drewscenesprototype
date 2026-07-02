@@ -1,4 +1,4 @@
-import { Matrix, Quaternion, Vector3 } from '@babylonjs/core';
+import { Matrix, Quaternion, Vector3 } from '@babylonjs/core/Maths/math.vector.pure';
 import type { PrimNode, Vec3 } from './types';
 
 export function fileSafe(s: string): string {
