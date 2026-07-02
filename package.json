@@ -10,9 +10,9 @@
     "typecheck": "tsc -b --noEmit"
   },
   "dependencies": {
-    "@babylonjs/core": "^7.54.0",
-    "@babylonjs/loaders": "^7.54.3",
-    "@babylonjs/materials": "^7.54.0",
+    "@babylonjs/core": "^9.15.0",
+    "@babylonjs/loaders": "^9.15.0",
+    "@babylonjs/materials": "^9.15.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

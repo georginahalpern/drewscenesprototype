@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Matrix } from '@babylonjs/core';
+import { Matrix } from '@babylonjs/core/Maths/math.vector.pure';
 import BottomPanel from './components/BottomPanel';
 import ContextMenu, {
   type ContextMenuItem

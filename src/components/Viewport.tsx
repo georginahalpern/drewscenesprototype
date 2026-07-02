@@ -1,51 +1,63 @@
 import { useEffect, useRef, useState } from 'react';
-import {
-  AbstractMesh,
-  ArcRotateCamera,
-  type AssetContainer,
-  Camera,
-  Color3,
-  Color4,
-  DirectionalLight,
-  Engine,
-  GizmoManager,
-  HemisphericLight,
-  Material,
-  Matrix,
-  Mesh,
-  MeshBuilder,
-  type Node,
-  PBRMaterial,
-  PointerEventTypes,
-  Quaternion,
-  Scene,
-  SceneLoader,
-  StandardMaterial,
-  TransformNode,
-  Vector3,
-  VertexBuffer,
-  type LinesMesh
-} from '@babylonjs/core';
-import '@babylonjs/loaders/glTF';
-import '@babylonjs/loaders/OBJ';
-import { OBJFileLoader } from '@babylonjs/loaders/OBJ';
-import type { IPositionGizmo, IRotationGizmo, IScaleGizmo } from '@babylonjs/core';
+import type { AssetContainer } from '@babylonjs/core/assetContainer';
+import { Camera } from '@babylonjs/core/Cameras/camera';
+import { ArcRotateCamera } from '@babylonjs/core/Cameras/arcRotateCamera';
+import { Engine } from '@babylonjs/core/Engines/engine';
+import { PointerEventTypes } from '@babylonjs/core/Events/pointerEvents';
+import { GizmoManager } from '@babylonjs/core/Gizmos/gizmoManager';
+import type { IPositionGizmo } from '@babylonjs/core/Gizmos/positionGizmo';
+import type { IRotationGizmo } from '@babylonjs/core/Gizmos/rotationGizmo';
+import type { IScaleGizmo } from '@babylonjs/core/Gizmos/scaleGizmo';
+import { DirectionalLight } from '@babylonjs/core/Lights/directionalLight';
+import { HemisphericLight } from '@babylonjs/core/Lights/hemisphericLight';
+import { Material } from '@babylonjs/core/Materials/material';
+import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial';
+import { PBRMaterial } from '@babylonjs/core/Materials/PBR/pbrMaterial';
+import { Color3, Color4 } from '@babylonjs/core/Maths/math.color';
+import { Matrix, Quaternion, Vector3 } from '@babylonjs/core/Maths/math.vector';
+import { MeshBuilder } from '@babylonjs/core/Meshes/meshBuilder';
+import '@babylonjs/core/Culling/ray';
+import type { LinesMesh } from '@babylonjs/core/Meshes/linesMesh';
+import { Mesh } from '@babylonjs/core/Meshes/mesh';
+import { AbstractMesh } from '@babylonjs/core/Meshes/abstractMesh';
+import { TransformNode } from '@babylonjs/core/Meshes/transformNode';
+import type { Node } from '@babylonjs/core/node';
+import { Scene } from '@babylonjs/core/scene';
+import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader';
+import { VertexBuffer } from '@babylonjs/core/Buffers/buffer';
+import { RegisterOutlineRenderer } from '@babylonjs/core/Rendering/outlineRenderer.pure';
+import { RegisterGLTFFileLoader } from '@babylonjs/loaders/glTF/glTFFileLoader.pure';
+import { RegisterGLTF2Loader } from '@babylonjs/loaders/glTF/2.0/glTFLoader.pure';
+import { OBJFileLoader, RegisterOBJFileLoader } from '@babylonjs/loaders/OBJ/objFileLoader.pure';
 import { GridMaterial } from '@babylonjs/materials/grid/gridMaterial';
 import type { AssetMeshNode, PrimNode, PrimTransform, ShapeKind, SubMeshInfo, ToolMode } from '../types';
 import { ASSET_DRAG_MIME, SHAPE_DRAG_MIME } from '../shapes';
 import { resolveAssetUrl } from '../assets';
 import CameraControls, { type CameraView } from './CameraControls';
 
-// Tune OBJ loader defaults once at module load:
-// - OPTIMIZE_WITH_UV=true (the default) merges vertices across smoothing
-//   groups and breaks shading on dense meshes (e.g. the hospital bed).
-// - COMPUTE_NORMALS recomputes normals from face geometry, sidestepping any
-//   bad/incomplete `vn` data in exported OBJs.
-// - OPTIMIZE_NORMALS averages duplicated normals so the recomputed shading
-//   stays smooth across the merged vertex set.
-OBJFileLoader.OPTIMIZE_WITH_UV = false;
-OBJFileLoader.COMPUTE_NORMALS = true;
-OBJFileLoader.OPTIMIZE_NORMALS = true;
+let objLoaderConfigured = false;
+let sceneLoadersRegistered = false;
+function ensureSceneLoadersRegistered(): void {
+  if (sceneLoadersRegistered) return;
+  RegisterGLTF2Loader();
+  RegisterGLTFFileLoader();
+  RegisterOBJFileLoader();
+  RegisterOutlineRenderer();
+  sceneLoadersRegistered = true;
+}
+function ensureObjLoaderDefaults(): void {
+  if (objLoaderConfigured) return;
+  // - OPTIMIZE_WITH_UV=true (the default) merges vertices across smoothing
+  //   groups and breaks shading on dense meshes (e.g. the hospital bed).
+  // - COMPUTE_NORMALS recomputes normals from face geometry, sidestepping any
+  //   bad/incomplete `vn` data in exported OBJs.
+  // - OPTIMIZE_NORMALS averages duplicated normals so the recomputed shading
+  //   stays smooth across the merged vertex set.
+  OBJFileLoader.OPTIMIZE_WITH_UV = false;
+  OBJFileLoader.COMPUTE_NORMALS = true;
+  OBJFileLoader.OPTIMIZE_NORMALS = true;
+  objLoaderConfigured = true;
+}
 
 interface Props {
   prims: PrimNode[];
@@ -123,6 +135,7 @@ const AXIS_COLORS = {
   y: new Color3(0.3, 0.85, 0.35),
   z: new Color3(0.3, 0.55, 0.95)
 } as const;
+const HIDDEN_THIN_INSTANCE = Matrix.Scaling(0, 0, 0);
 
 export default function Viewport({
   prims,
@@ -185,8 +198,8 @@ export default function Viewport({
     end: Vector3 | null;
     committed: boolean;
   }>({ start: null, end: null, committed: false });
-  const measureStartSphereRef = useRef<Mesh | null>(null);
-  const measureEndSphereRef = useRef<Mesh | null>(null);
+  const measureMarkersRef = useRef<Mesh | null>(null);
+  const measureMarkerMatricesRef = useRef<Float32Array | null>(null);
   const measureLineRef = useRef<LinesMesh | null>(null);
   const measureLabelRef = useRef<HTMLDivElement | null>(null);
   const clearMeasurementRef = useRef<() => void>(() => {});
@@ -294,6 +307,8 @@ export default function Viewport({
       antialias: true
     });
 
+    ensureObjLoaderDefaults();
+    ensureSceneLoadersRegistered();
     const scene = new Scene(engine);
     scene.clearColor = new Color4(0.1, 0.11, 0.13, 1);
     sceneRef.current = scene;
@@ -367,6 +382,14 @@ export default function Viewport({
     ground.material = grid;
     ground.alphaIndex = 0;
     gridMatRef.current = grid;
+    scene.onBeforeRenderObservable.add(() => {
+      // Babylon warns when logarithmic depth is used with orthographic cameras.
+      // Keep it enabled for perspective (better depth precision), disabled for ortho.
+      const useLogDepth = camera.mode !== Camera.ORTHOGRAPHIC_CAMERA;
+      if (grid.useLogarithmicDepth !== useLogDepth) {
+        grid.useLogarithmicDepth = useLogDepth;
+      }
+    });
 
     const axisLength = 2;
     const xAxis = MeshBuilder.CreateLines(
@@ -868,35 +891,48 @@ export default function Viewport({
       measureLineRef.current = line;
     };
 
-    const setMeasureSphere = (
-      ref: React.MutableRefObject<Mesh | null>,
-      pos: Vector3 | null,
-      name: string
-    ) => {
-      if (!pos) {
-        if (ref.current) {
-          ref.current.dispose();
-          ref.current = null;
-        }
-        return;
-      }
-      if (!ref.current) {
-        const sphere = MeshBuilder.CreateSphere(name, { diameter: 0.18 }, scene);
-        sphere.isPickable = false;
-        sphere.renderingGroupId = 1;
-        const mat = new StandardMaterial(`${name}-mat`, scene);
+    const ensureMeasureMarkers = (): {
+      mesh: Mesh;
+      matrices: Float32Array;
+    } => {
+      let mesh = measureMarkersRef.current;
+      let matrices = measureMarkerMatricesRef.current;
+      if (!mesh || !matrices) {
+        mesh = MeshBuilder.CreateSphere(
+          'measure-markers',
+          { diameter: 0.18 },
+          scene
+        );
+        mesh.isPickable = false;
+        mesh.renderingGroupId = 1;
+        const mat = new StandardMaterial('measure-markers-mat', scene);
         mat.emissiveColor = new Color3(1, 0.84, 0.27);
         mat.disableLighting = true;
-        sphere.material = mat;
-        ref.current = sphere;
+        mesh.material = mat;
+        matrices = new Float32Array(16 * 2);
+        HIDDEN_THIN_INSTANCE.copyToArray(matrices, 0);
+        HIDDEN_THIN_INSTANCE.copyToArray(matrices, 16);
+        mesh.thinInstanceSetBuffer('matrix', matrices, 16, true);
+        measureMarkersRef.current = mesh;
+        measureMarkerMatricesRef.current = matrices;
       }
-      ref.current.position.copyFrom(pos);
+      return { mesh, matrices };
+    };
+
+    const setMeasureMarker = (index: 0 | 1, pos: Vector3 | null) => {
+      const { mesh, matrices } = ensureMeasureMarkers();
+      if (pos) {
+        Matrix.Translation(pos.x, pos.y, pos.z).copyToArray(matrices, index * 16);
+      } else {
+        HIDDEN_THIN_INSTANCE.copyToArray(matrices, index * 16);
+      }
+      mesh.thinInstanceBufferUpdated('matrix');
     };
 
     clearMeasurementRef.current = () => {
       measureRef.current = { start: null, end: null, committed: false };
-      setMeasureSphere(measureStartSphereRef, null, 'measure-start');
-      setMeasureSphere(measureEndSphereRef, null, 'measure-end');
+      setMeasureMarker(0, null);
+      setMeasureMarker(1, null);
       if (measureLineRef.current) {
         measureLineRef.current.dispose();
         measureLineRef.current = null;
@@ -916,15 +952,15 @@ export default function Viewport({
           if (cur.committed) {
             // Third click: restart with a fresh start point.
             measureRef.current = { start: pt, end: null, committed: false };
-            setMeasureSphere(measureStartSphereRef, pt, 'measure-start');
-            setMeasureSphere(measureEndSphereRef, null, 'measure-end');
+            setMeasureMarker(0, pt);
+            setMeasureMarker(1, null);
             rebuildMeasureLine();
           } else if (!cur.start) {
             measureRef.current = { start: pt, end: null, committed: false };
-            setMeasureSphere(measureStartSphereRef, pt, 'measure-start');
+            setMeasureMarker(0, pt);
           } else {
             measureRef.current = { start: cur.start, end: pt, committed: true };
-            setMeasureSphere(measureEndSphereRef, pt, 'measure-end');
+            setMeasureMarker(1, pt);
             rebuildMeasureLine();
           }
         } else if (info.type === PointerEventTypes.POINTERMOVE) {
@@ -937,7 +973,7 @@ export default function Viewport({
           if (!pt) return;
           measureRef.current = { start: cur.start, end: pt, committed: false };
           rebuildMeasureLine();
-          // Leave measureEndSphereRef hidden during preview so the user can
+          // Keep the end marker hidden during preview so the user can
           // still see which click "locks in" the measurement.
         }
         return;
@@ -1074,8 +1110,11 @@ export default function Viewport({
       lastRotationGizmoRef.current = null;
       lastScaleGizmoRef.current = null;
       gridMatRef.current = null;
-      measureStartSphereRef.current = null;
-      measureEndSphereRef.current = null;
+      if (measureMarkersRef.current) {
+        measureMarkersRef.current.dispose(false, true);
+      }
+      measureMarkersRef.current = null;
+      measureMarkerMatricesRef.current = null;
       measureLineRef.current = null;
       gizmoMgr.dispose();
       outlinedMeshesRef.current.clear();
@@ -1386,6 +1425,83 @@ export default function Viewport({
   );
 }
 
+type PrimitiveKind = Exclude<ShapeKind, 'group' | 'reference'>;
+
+let primitiveTemplateCachesByScene:
+  | WeakMap<Scene, Map<PrimitiveKind, Mesh>>
+  | null = null;
+function getPrimitiveTemplateCacheByScene(): WeakMap<
+  Scene,
+  Map<PrimitiveKind, Mesh>
+> {
+  if (!primitiveTemplateCachesByScene) {
+    primitiveTemplateCachesByScene = new WeakMap();
+  }
+  return primitiveTemplateCachesByScene;
+}
+
+function createPrimitiveTemplate(kind: PrimitiveKind, scene: Scene): Mesh {
+  const name = `__primitive-template-${kind}`;
+  let mesh: Mesh;
+  switch (kind) {
+    case 'box':
+      mesh = MeshBuilder.CreateBox(name, { size: 1 }, scene);
+      break;
+    case 'cylinder':
+      mesh = MeshBuilder.CreateCylinder(
+        name,
+        { diameter: 1, height: 1 },
+        scene
+      );
+      break;
+    case 'sphere':
+      mesh = MeshBuilder.CreateSphere(name, { diameter: 1 }, scene);
+      break;
+    case 'plane':
+      mesh = MeshBuilder.CreatePlane(
+        name,
+        { size: 1, sideOrientation: Mesh.DOUBLESIDE },
+        scene
+      );
+      // Keep "plane" aligned to the editor's XZ floor convention.
+      mesh.rotation.x = Math.PI / 2;
+      break;
+    case 'cone':
+      mesh = MeshBuilder.CreateCylinder(
+        name,
+        { diameterTop: 0, diameterBottom: 1, height: 1, tessellation: 32 },
+        scene
+      );
+      break;
+  }
+  mesh.isVisible = false;
+  mesh.setEnabled(false);
+  mesh.isPickable = false;
+  return mesh;
+}
+
+function createPrimitiveMesh(kind: PrimitiveKind, id: string, scene: Scene): Mesh {
+  const cachesByScene = getPrimitiveTemplateCacheByScene();
+  let cache = cachesByScene.get(scene);
+  if (!cache) {
+    cache = new Map();
+    cachesByScene.set(scene, cache);
+  }
+  let template = cache.get(kind);
+  if (!template || template.isDisposed()) {
+    template = createPrimitiveTemplate(kind, scene);
+    cache.set(kind, template);
+  }
+  const clone = template.clone(id);
+  if (!clone) {
+    throw new Error(`Failed to clone primitive template for kind "${kind}"`);
+  }
+  clone.isVisible = true;
+  clone.setEnabled(true);
+  clone.isPickable = true;
+  return clone;
+}
+
 function buildShapeMesh(
   prim: PrimNode,
   scene: Scene,
@@ -1394,31 +1510,19 @@ function buildShapeMesh(
   let mesh: Mesh;
   switch (prim.kind) {
     case 'box':
-      mesh = MeshBuilder.CreateBox(prim.id, { size: 1 }, scene);
+      mesh = createPrimitiveMesh('box', prim.id, scene);
       break;
     case 'cylinder':
-      mesh = MeshBuilder.CreateCylinder(
-        prim.id,
-        { diameter: 1, height: 1 },
-        scene
-      );
+      mesh = createPrimitiveMesh('cylinder', prim.id, scene);
       break;
     case 'sphere':
-      mesh = MeshBuilder.CreateSphere(prim.id, { diameter: 1 }, scene);
+      mesh = createPrimitiveMesh('sphere', prim.id, scene);
       break;
     case 'plane':
-      mesh = MeshBuilder.CreateGround(
-        prim.id,
-        { width: 1, height: 1 },
-        scene
-      );
+      mesh = createPrimitiveMesh('plane', prim.id, scene);
       break;
     case 'cone':
-      mesh = MeshBuilder.CreateCylinder(
-        prim.id,
-        { diameterTop: 0, diameterBottom: 1, height: 1, tessellation: 32 },
-        scene
-      );
+      mesh = createPrimitiveMesh('cone', prim.id, scene);
       break;
     case 'group':
       // An empty Mesh acts as a pure transform node: children parent to it,
@@ -1482,10 +1586,18 @@ function parseHexColor(hex: string): { color: Color3; alpha: number } {
 // reused for N instances of the same asset — the dominant cost when a
 // scene contains many copies of e.g. HospitalBed.obj. WeakMap so disposing
 // the scene auto-evicts the cache.
-const assetContainerCachesByScene = new WeakMap<
+let assetContainerCachesByScene:
+  | WeakMap<Scene, Map<string, Promise<AssetContainer>>>
+  | null = null;
+function getAssetContainerCacheByScene(): WeakMap<
   Scene,
   Map<string, Promise<AssetContainer>>
->();
+> {
+  if (!assetContainerCachesByScene) {
+    assetContainerCachesByScene = new WeakMap();
+  }
+  return assetContainerCachesByScene;
+}
 
 function getOrLoadAssetContainer(
   scene: Scene,
@@ -1494,10 +1606,11 @@ function getOrLoadAssetContainer(
   fileName: string,
   pluginExtension: string | undefined
 ): Promise<AssetContainer> {
-  let cache = assetContainerCachesByScene.get(scene);
+  const cachesByScene = getAssetContainerCacheByScene();
+  let cache = cachesByScene.get(scene);
   if (!cache) {
     cache = new Map();
-    assetContainerCachesByScene.set(scene, cache);
+    cachesByScene.set(scene, cache);
   }
   let pending = cache.get(cacheKey);
   if (pending) return pending;
