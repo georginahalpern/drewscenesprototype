@@ -867,64 +867,43 @@ function showGizmoForMode(
 ): void {
   console.log(`[Lite] showGizmoForMode: mode=${mode}`);
   
-  // Hide all gizmos first by setting their root/main visibility and visibility property
-  if (posGizmo) {
-    // Try both visible property and enabled property
-    if ('visible' in posGizmo) (posGizmo as any).visible = false;
-    if ('enabled' in posGizmo) (posGizmo as any).enabled = false;
-    posGizmo.xGizmo.root.visible = false;
-    posGizmo.yGizmo.root.visible = false;
-    posGizmo.zGizmo.root.visible = false;
-    if (posGizmo.xPlaneGizmo) posGizmo.xPlaneGizmo.root.visible = false;
-    if (posGizmo.yPlaneGizmo) posGizmo.yPlaneGizmo.root.visible = false;
-    if (posGizmo.zPlaneGizmo) posGizmo.zPlaneGizmo.root.visible = false;
-  }
-  if (rotGizmo) {
-    if ('visible' in rotGizmo) (rotGizmo as any).visible = false;
-    if ('enabled' in rotGizmo) (rotGizmo as any).enabled = false;
-    rotGizmo.xGizmo.root.visible = false;
-    rotGizmo.yGizmo.root.visible = false;
-    rotGizmo.zGizmo.root.visible = false;
-  }
-  if (scaleGizmo) {
-    if ('visible' in scaleGizmo) (scaleGizmo as any).visible = false;
-    if ('enabled' in scaleGizmo) (scaleGizmo as any).enabled = false;
-    scaleGizmo.xGizmo.root.visible = false;
-    scaleGizmo.yGizmo.root.visible = false;
-    scaleGizmo.zGizmo.root.visible = false;
-  }
-   
+  // Helper to hide all sub-gizmo roots
+  const hideGizmo = (gizmo: ReturnType<typeof createPositionGizmo> | ReturnType<typeof createRotationGizmo> | ReturnType<typeof createScaleGizmo>): void => {
+    if ('xPlaneGizmo' in gizmo && gizmo.xPlaneGizmo) gizmo.xPlaneGizmo.root.visible = false;
+    if ('yPlaneGizmo' in gizmo && gizmo.yPlaneGizmo) gizmo.yPlaneGizmo.root.visible = false;
+    if ('zPlaneGizmo' in gizmo && gizmo.zPlaneGizmo) gizmo.zPlaneGizmo.root.visible = false;
+    if ('uniformScaleGizmo' in gizmo && gizmo.uniformScaleGizmo) gizmo.uniformScaleGizmo.root.visible = false;
+    gizmo.xGizmo.root.visible = false;
+    gizmo.yGizmo.root.visible = false;
+    gizmo.zGizmo.root.visible = false;
+  };
+
+  // Helper to show all sub-gizmo roots
+  const showGizmo = (gizmo: ReturnType<typeof createPositionGizmo> | ReturnType<typeof createRotationGizmo> | ReturnType<typeof createScaleGizmo>): void => {
+    if ('xPlaneGizmo' in gizmo && gizmo.xPlaneGizmo) gizmo.xPlaneGizmo.root.visible = true;
+    if ('yPlaneGizmo' in gizmo && gizmo.yPlaneGizmo) gizmo.yPlaneGizmo.root.visible = true;
+    if ('zPlaneGizmo' in gizmo && gizmo.zPlaneGizmo) gizmo.zPlaneGizmo.root.visible = true;
+    if ('uniformScaleGizmo' in gizmo && gizmo.uniformScaleGizmo) gizmo.uniformScaleGizmo.root.visible = true;
+    gizmo.xGizmo.root.visible = true;
+    gizmo.yGizmo.root.visible = true;
+    gizmo.zGizmo.root.visible = true;
+  };
+  
+  // Hide all gizmos first
+  if (posGizmo) hideGizmo(posGizmo);
+  if (rotGizmo) hideGizmo(rotGizmo);
+  if (scaleGizmo) hideGizmo(scaleGizmo);
+  
   // Show appropriate gizmo for non-select/measure modes
   switch (mode) {
     case 'move':
-      if (posGizmo) {
-        if ('visible' in posGizmo) (posGizmo as any).visible = true;
-        if ('enabled' in posGizmo) (posGizmo as any).enabled = true;
-        posGizmo.xGizmo.root.visible = true;
-        posGizmo.yGizmo.root.visible = true;
-        posGizmo.zGizmo.root.visible = true;
-        if (posGizmo.xPlaneGizmo) posGizmo.xPlaneGizmo.root.visible = true;
-        if (posGizmo.yPlaneGizmo) posGizmo.yPlaneGizmo.root.visible = true;
-        if (posGizmo.zPlaneGizmo) posGizmo.zPlaneGizmo.root.visible = true;
-      }
+      if (posGizmo) showGizmo(posGizmo);
       break;
     case 'rotate':
-      if (rotGizmo) {
-        if ('visible' in rotGizmo) (rotGizmo as any).visible = true;
-        if ('enabled' in rotGizmo) (rotGizmo as any).enabled = true;
-        rotGizmo.xGizmo.root.visible = true;
-        rotGizmo.yGizmo.root.visible = true;
-        rotGizmo.zGizmo.root.visible = true;
-      }
+      if (rotGizmo) showGizmo(rotGizmo);
       break;
     case 'scale':
-      if (scaleGizmo) {
-        if ('visible' in scaleGizmo) (scaleGizmo as any).visible = true;
-        if ('enabled' in scaleGizmo) (scaleGizmo as any).enabled = true;
-        scaleGizmo.xGizmo.root.visible = true;
-        scaleGizmo.yGizmo.root.visible = true;
-        scaleGizmo.zGizmo.root.visible = true;
-      }
+      if (scaleGizmo) showGizmo(scaleGizmo);
       break;
   }
 }
