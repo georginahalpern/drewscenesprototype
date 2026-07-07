@@ -309,6 +309,8 @@ export default function BabylonLiteDemo({
       // pickAsync expects CSS-space coordinates (it scales internally)
       const info = await pickAsync(picker, xCss, yCss);
       
+      console.log('[Lite] Pick result:', { hit: info.hit, pickedMeshName: (info.pickedMesh as any)?.name, isGround: info.pickedMesh === ground });
+      
       // Skip if we picked the ground or nothing
       if (!info.hit || !info.pickedMesh || info.pickedMesh === ground) {
         // Deselect if clicking empty space or ground - just hide gizmos, don't dispose
@@ -863,8 +865,10 @@ function showGizmoForMode(
   rotGizmo: ReturnType<typeof createRotationGizmo> | null,
   scaleGizmo: ReturnType<typeof createScaleGizmo> | null
 ): void {
-  // Hide all axes of all gizmos
+  
+  // Hide all gizmos first
   if (posGizmo) {
+    (posGizmo as any).enabled = false;
     posGizmo.xGizmo.root.visible = false;
     posGizmo.yGizmo.root.visible = false;
     posGizmo.zGizmo.root.visible = false;
@@ -873,11 +877,13 @@ function showGizmoForMode(
     if (posGizmo.zPlaneGizmo) posGizmo.zPlaneGizmo.root.visible = false;
   }
   if (rotGizmo) {
+    (rotGizmo as any).enabled = false;
     rotGizmo.xGizmo.root.visible = false;
     rotGizmo.yGizmo.root.visible = false;
     rotGizmo.zGizmo.root.visible = false;
   }
   if (scaleGizmo) {
+    (scaleGizmo as any).enabled = false;
     scaleGizmo.xGizmo.root.visible = false;
     scaleGizmo.yGizmo.root.visible = false;
     scaleGizmo.zGizmo.root.visible = false;
@@ -887,6 +893,7 @@ function showGizmoForMode(
   switch (mode) {
     case 'move':
       if (posGizmo) {
+        (posGizmo as any).enabled = true;
         posGizmo.xGizmo.root.visible = true;
         posGizmo.yGizmo.root.visible = true;
         posGizmo.zGizmo.root.visible = true;
@@ -897,6 +904,7 @@ function showGizmoForMode(
       break;
     case 'rotate':
       if (rotGizmo) {
+        (rotGizmo as any).enabled = true;
         rotGizmo.xGizmo.root.visible = true;
         rotGizmo.yGizmo.root.visible = true;
         rotGizmo.zGizmo.root.visible = true;
@@ -904,6 +912,7 @@ function showGizmoForMode(
       break;
     case 'scale':
       if (scaleGizmo) {
+        (scaleGizmo as any).enabled = true;
         scaleGizmo.xGizmo.root.visible = true;
         scaleGizmo.yGizmo.root.visible = true;
         scaleGizmo.zGizmo.root.visible = true;
