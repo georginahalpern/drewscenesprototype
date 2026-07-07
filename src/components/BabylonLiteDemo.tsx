@@ -865,10 +865,13 @@ function showGizmoForMode(
   rotGizmo: ReturnType<typeof createRotationGizmo> | null,
   scaleGizmo: ReturnType<typeof createScaleGizmo> | null
 ): void {
+  console.log(`[Lite] showGizmoForMode: mode=${mode}`);
   
-  // Hide all gizmos first
+  // Hide all gizmos first by setting their root/main visibility and visibility property
   if (posGizmo) {
-    (posGizmo as any).enabled = false;
+    // Try both visible property and enabled property
+    if ('visible' in posGizmo) (posGizmo as any).visible = false;
+    if ('enabled' in posGizmo) (posGizmo as any).enabled = false;
     posGizmo.xGizmo.root.visible = false;
     posGizmo.yGizmo.root.visible = false;
     posGizmo.zGizmo.root.visible = false;
@@ -877,13 +880,15 @@ function showGizmoForMode(
     if (posGizmo.zPlaneGizmo) posGizmo.zPlaneGizmo.root.visible = false;
   }
   if (rotGizmo) {
-    (rotGizmo as any).enabled = false;
+    if ('visible' in rotGizmo) (rotGizmo as any).visible = false;
+    if ('enabled' in rotGizmo) (rotGizmo as any).enabled = false;
     rotGizmo.xGizmo.root.visible = false;
     rotGizmo.yGizmo.root.visible = false;
     rotGizmo.zGizmo.root.visible = false;
   }
   if (scaleGizmo) {
-    (scaleGizmo as any).enabled = false;
+    if ('visible' in scaleGizmo) (scaleGizmo as any).visible = false;
+    if ('enabled' in scaleGizmo) (scaleGizmo as any).enabled = false;
     scaleGizmo.xGizmo.root.visible = false;
     scaleGizmo.yGizmo.root.visible = false;
     scaleGizmo.zGizmo.root.visible = false;
@@ -893,7 +898,8 @@ function showGizmoForMode(
   switch (mode) {
     case 'move':
       if (posGizmo) {
-        (posGizmo as any).enabled = true;
+        if ('visible' in posGizmo) (posGizmo as any).visible = true;
+        if ('enabled' in posGizmo) (posGizmo as any).enabled = true;
         posGizmo.xGizmo.root.visible = true;
         posGizmo.yGizmo.root.visible = true;
         posGizmo.zGizmo.root.visible = true;
@@ -904,7 +910,8 @@ function showGizmoForMode(
       break;
     case 'rotate':
       if (rotGizmo) {
-        (rotGizmo as any).enabled = true;
+        if ('visible' in rotGizmo) (rotGizmo as any).visible = true;
+        if ('enabled' in rotGizmo) (rotGizmo as any).enabled = true;
         rotGizmo.xGizmo.root.visible = true;
         rotGizmo.yGizmo.root.visible = true;
         rotGizmo.zGizmo.root.visible = true;
@@ -912,7 +919,8 @@ function showGizmoForMode(
       break;
     case 'scale':
       if (scaleGizmo) {
-        (scaleGizmo as any).enabled = true;
+        if ('visible' in scaleGizmo) (scaleGizmo as any).visible = true;
+        if ('enabled' in scaleGizmo) (scaleGizmo as any).enabled = true;
         scaleGizmo.xGizmo.root.visible = true;
         scaleGizmo.yGizmo.root.visible = true;
         scaleGizmo.zGizmo.root.visible = true;
