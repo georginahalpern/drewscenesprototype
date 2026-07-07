@@ -41,7 +41,8 @@ import {
   removeFromScene,
   resizeEngine,
   startEngine,
-  stopEngine
+  stopEngine,
+  setMeshVisible
 } from '@babylonjs/lite';
 import { resolveAssetUrl } from '../assets';
 import { ASSET_DRAG_MIME, SHAPE_DRAG_MIME } from '../shapes';
@@ -113,6 +114,7 @@ export default function BabylonLiteDemo({
   const dropEnabledRef = useRef(dropEnabled);
   const onShapeDroppedRef = useRef(onShapeDropped);
   const onAssetDroppedRef = useRef(onAssetDropped);
+  const toolRef = useRef(tool);
 
   useEffect(() => {
     dropEnabledRef.current = dropEnabled;
@@ -127,6 +129,10 @@ export default function BabylonLiteDemo({
   }, [onAssetDropped]);
 
   useEffect(() => {
+    toolRef.current = tool;
+  }, [tool]);
+
+  useEffect(() => {
     const scene = sceneRef.current;
     const ground = groundRef.current;
     if (!scene || !ground) return;
@@ -134,8 +140,15 @@ export default function BabylonLiteDemo({
   }, [theme]);
 
   useEffect(() => {
-    // Update visible gizmo based on tool mode
-    showGizmoForMode(tool, positionGizmoRef.current, rotationGizmoRef.current, scaleGizmoRef.current);
+    // Toggle which gizmo is shown for the active tool. showGizmoForMode hides and
+    // detaches every gizmo, then reveals and attaches only the active one.
+    showGizmoForMode(
+      tool,
+      positionGizmoRef.current,
+      rotationGizmoRef.current,
+      scaleGizmoRef.current,
+      selectedNodeRef.current
+    );
   }, [tool]);
 
   useEffect(() => {
@@ -290,7 +303,8 @@ export default function BabylonLiteDemo({
       ev.preventDefault();
     };
   const onCanvasClick = async (ev: MouseEvent) => {
-      if (tool === 'measure') return;
+      const currentTool = toolRef.current;
+      if (currentTool === 'measure') return;
       const scene = sceneRef.current;
       const picker = pickerRef.current;
       const canvas = canvasRef.current;
@@ -313,9 +327,22 @@ export default function BabylonLiteDemo({
       
       // Skip if we picked the ground or nothing
       if (!info.hit || !info.pickedMesh || info.pickedMesh === ground) {
-        // Deselect if clicking empty space or ground - just hide gizmos, don't dispose
+        // While transforming, keep current selection on incidental ground clicks so
+        // mode switches can continue to re-target the same node.
+        if (selectedNodeRef.current && currentTool !== 'select') {
+          showGizmoForMode(
+            currentTool,
+            positionGizmoRef.current,
+            rotationGizmoRef.current,
+            scaleGizmoRef.current,
+            selectedNodeRef.current
+          );
+          return;
+        }
+
+        // Deselect if clicking empty space or ground in select mode.
         selectedNodeRef.current = null;
-        showGizmoForMode('select', positionGizmoRef.current, rotationGizmoRef.current, scaleGizmoRef.current);
+        showGizmoForMode('select', positionGizmoRef.current, rotationGizmoRef.current, scaleGizmoRef.current, null);
         return;
       }
       
@@ -324,31 +351,19 @@ export default function BabylonLiteDemo({
       // If same node is already selected, just return
       if (selectedNodeRef.current === pickedNode) return;
        
-      // Hide old gizmos
-      showGizmoForMode('select', positionGizmoRef.current, rotationGizmoRef.current, scaleGizmoRef.current);
-      
-      // Select new node and reattach gizmos (don't dispose, just update attachments)
+      // Select new node
       selectedNodeRef.current = pickedNode;
-      if (positionGizmoRef.current) {
-        attachPositionGizmoToNode(positionGizmoRef.current, pickedNode as any);
-      }
-      if (rotationGizmoRef.current) {
-        attachRotationGizmoToNode(rotationGizmoRef.current, pickedNode as any);
-      }
-      if (scaleGizmoRef.current) {
-        attachScaleGizmoToNode(scaleGizmoRef.current, pickedNode as any);
-      }
       
       // If we don't have gizmos yet, create them
       if (!positionGizmoRef.current) {
-        const gizmos = createGizmosForNode(engine, utilityLayer, pickedNode);
+        const gizmos = createGizmosForNode(engine, utilityLayer);
         positionGizmoRef.current = gizmos.position;
         rotationGizmoRef.current = gizmos.rotation;
         scaleGizmoRef.current = gizmos.scale;
       }
       
       // Show the appropriate gizmo for the current tool
-      showGizmoForMode(tool, positionGizmoRef.current, rotationGizmoRef.current, scaleGizmoRef.current);
+      showGizmoForMode(currentTool, positionGizmoRef.current, rotationGizmoRef.current, scaleGizmoRef.current, pickedNode);
     };
 
     canvas.addEventListener('dragover', onDragOver);
@@ -810,37 +825,34 @@ function fitReferenceAfterLoad(
  
 function createGizmosForNode(
   engine: Awaited<ReturnType<typeof createEngine>>,
-  utilityLayer: ReturnType<typeof createUtilityLayer> | null,
-  node: unknown
+  utilityLayer: ReturnType<typeof createUtilityLayer> | null
 ): { position: ReturnType<typeof createPositionGizmo> | null; rotation: ReturnType<typeof createRotationGizmo> | null; scale: ReturnType<typeof createScaleGizmo> | null } {
   const result = { position: null as any, rotation: null as any, scale: null as any };
   if (!utilityLayer) return result;
    
   try {
     result.position = createPositionGizmo(engine, utilityLayer);
-    attachPositionGizmoToNode(result.position, node as any);
+    attachPositionGizmoToNode(result.position, null);
      
     result.rotation = createRotationGizmo(engine, utilityLayer);
-    attachRotationGizmoToNode(result.rotation, node as any);
+    attachRotationGizmoToNode(result.rotation, null);
      
     result.scale = createScaleGizmo(engine, utilityLayer);
-    attachScaleGizmoToNode(result.scale, node as any);
+    attachScaleGizmoToNode(result.scale, null);
       
-    // Hide all axes of all gizmos initially
-    result.position.xGizmo.root.visible = false;
-    result.position.yGizmo.root.visible = false;
-    result.position.zGizmo.root.visible = false;
-    if (result.position.xPlaneGizmo) result.position.xPlaneGizmo.root.visible = false;
-    if (result.position.yPlaneGizmo) result.position.yPlaneGizmo.root.visible = false;
-    if (result.position.zPlaneGizmo) result.position.zPlaneGizmo.root.visible = false;
-     
-    result.rotation.xGizmo.root.visible = false;
-    result.rotation.yGizmo.root.visible = false;
-    result.rotation.zGizmo.root.visible = false;
-     
-    result.scale.xGizmo.root.visible = false;
-    result.scale.yGizmo.root.visible = false;
-    result.scale.zGizmo.root.visible = false;
+    // Newly created gizmos start hidden; showGizmoForMode reveals the active one.
+    // setMeshVisible cascades to the rendered children and bumps the visibility
+    // epoch (a bare root.visible write does neither, so the mesh keeps drawing).
+    setMeshVisible(result.position.xGizmo.root, false);
+    setMeshVisible(result.position.yGizmo.root, false);
+    setMeshVisible(result.position.zGizmo.root, false);
+    setMeshVisible(result.rotation.xGizmo.root, false);
+    setMeshVisible(result.rotation.yGizmo.root, false);
+    setMeshVisible(result.rotation.zGizmo.root, false);
+    setMeshVisible(result.scale.xGizmo.root, false);
+    setMeshVisible(result.scale.yGizmo.root, false);
+    setMeshVisible(result.scale.zGizmo.root, false);
+    setMeshVisible(result.scale.uniformScaleGizmo.root, false);
   } catch (err) {
     console.warn('[Lite] Failed to create gizmos:', err);
   }
@@ -863,47 +875,67 @@ function showGizmoForMode(
   mode: 'select' | 'move' | 'rotate' | 'scale' | 'measure',
   posGizmo: ReturnType<typeof createPositionGizmo> | null,
   rotGizmo: ReturnType<typeof createRotationGizmo> | null,
-  scaleGizmo: ReturnType<typeof createScaleGizmo> | null
+  scaleGizmo: ReturnType<typeof createScaleGizmo> | null,
+  selectedNode: unknown | null
 ): void {
-  console.log(`[Lite] showGizmoForMode: mode=${mode}`);
-  
-  // Helper to hide all sub-gizmo roots
-  const hideGizmo = (gizmo: ReturnType<typeof createPositionGizmo> | ReturnType<typeof createRotationGizmo> | ReturnType<typeof createScaleGizmo>): void => {
-    if ('xPlaneGizmo' in gizmo && gizmo.xPlaneGizmo) gizmo.xPlaneGizmo.root.visible = false;
-    if ('yPlaneGizmo' in gizmo && gizmo.yPlaneGizmo) gizmo.yPlaneGizmo.root.visible = false;
-    if ('zPlaneGizmo' in gizmo && gizmo.zPlaneGizmo) gizmo.zPlaneGizmo.root.visible = false;
-    if ('uniformScaleGizmo' in gizmo && gizmo.uniformScaleGizmo) gizmo.uniformScaleGizmo.root.visible = false;
-    gizmo.xGizmo.root.visible = false;
-    gizmo.yGizmo.root.visible = false;
-    gizmo.zGizmo.root.visible = false;
+  // Toggle every sub-gizmo root via setMeshVisible. This cascades to the rendered
+  // arrow/ring children AND bumps the render-visibility epoch so hidden gizmos
+  // actually stop drawing. A bare `root.visible = false` write does neither.
+  const setGizmoVisible = (
+    gizmo:
+      | ReturnType<typeof createPositionGizmo>
+      | ReturnType<typeof createRotationGizmo>
+      | ReturnType<typeof createScaleGizmo>,
+    visible: boolean
+  ): void => {
+    setMeshVisible(gizmo.xGizmo.root, visible);
+    setMeshVisible(gizmo.yGizmo.root, visible);
+    setMeshVisible(gizmo.zGizmo.root, visible);
+    if ('xPlaneGizmo' in gizmo && gizmo.xPlaneGizmo) setMeshVisible(gizmo.xPlaneGizmo.root, visible);
+    if ('yPlaneGizmo' in gizmo && gizmo.yPlaneGizmo) setMeshVisible(gizmo.yPlaneGizmo.root, visible);
+    if ('zPlaneGizmo' in gizmo && gizmo.zPlaneGizmo) setMeshVisible(gizmo.zPlaneGizmo.root, visible);
+    if ('uniformScaleGizmo' in gizmo && gizmo.uniformScaleGizmo) {
+      setMeshVisible(gizmo.uniformScaleGizmo.root, visible);
+    }
   };
 
-  // Helper to show all sub-gizmo roots
-  const showGizmo = (gizmo: ReturnType<typeof createPositionGizmo> | ReturnType<typeof createRotationGizmo> | ReturnType<typeof createScaleGizmo>): void => {
-    if ('xPlaneGizmo' in gizmo && gizmo.xPlaneGizmo) gizmo.xPlaneGizmo.root.visible = true;
-    if ('yPlaneGizmo' in gizmo && gizmo.yPlaneGizmo) gizmo.yPlaneGizmo.root.visible = true;
-    if ('zPlaneGizmo' in gizmo && gizmo.zPlaneGizmo) gizmo.zPlaneGizmo.root.visible = true;
-    if ('uniformScaleGizmo' in gizmo && gizmo.uniformScaleGizmo) gizmo.uniformScaleGizmo.root.visible = true;
-    gizmo.xGizmo.root.visible = true;
-    gizmo.yGizmo.root.visible = true;
-    gizmo.zGizmo.root.visible = true;
-  };
-  
-  // Hide all gizmos first
-  if (posGizmo) hideGizmo(posGizmo);
-  if (rotGizmo) hideGizmo(rotGizmo);
-  if (scaleGizmo) hideGizmo(scaleGizmo);
+  // Hide AND detach every gizmo first: a hidden-but-attached gizmo can still
+  // capture pointer drags, so detaching guarantees only the active gizmo is live.
+  if (posGizmo) {
+    setGizmoVisible(posGizmo, false);
+    attachPositionGizmoToNode(posGizmo, null);
+  }
+  if (rotGizmo) {
+    setGizmoVisible(rotGizmo, false);
+    attachRotationGizmoToNode(rotGizmo, null);
+  }
+  if (scaleGizmo) {
+    setGizmoVisible(scaleGizmo, false);
+    attachScaleGizmoToNode(scaleGizmo, null);
+  }
+
+  const activeNode = selectedNode as any;
+  if (!activeNode || mode === 'select' || mode === 'measure') return;
   
   // Show appropriate gizmo for non-select/measure modes
   switch (mode) {
     case 'move':
-      if (posGizmo) showGizmo(posGizmo);
+      if (posGizmo) {
+        attachPositionGizmoToNode(posGizmo, activeNode);
+        setGizmoVisible(posGizmo, true);
+      }
       break;
     case 'rotate':
-      if (rotGizmo) showGizmo(rotGizmo);
+      if (rotGizmo) {
+        attachRotationGizmoToNode(rotGizmo, activeNode);
+        setGizmoVisible(rotGizmo, true);
+      }
       break;
     case 'scale':
-      if (scaleGizmo) showGizmo(scaleGizmo);
+      if (scaleGizmo) {
+        attachScaleGizmoToNode(scaleGizmo, activeNode);
+        setGizmoVisible(scaleGizmo, true);
+      }
       break;
   }
 }
