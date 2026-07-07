@@ -6,18 +6,20 @@ export type Theme = 'dark' | 'light';
  *  panels are visible. The Ontology Editor is the authoring surface for
  *  the shared ontology; Scene Editor / Viewer compose scene files (JSON
  *  with conditions + selected instances) on top of an unchanged ontology. */
-export type AppMode = 'ontology' | 'scene-editor' | 'scene-viewer';
+export type AppMode = 'ontology' | 'scene-editor' | 'scene-viewer' | 'babylon-lite-demo';
 
 const MODE_LABELS: Record<AppMode, string> = {
   'ontology': 'Ontology Editor',
   'scene-editor': 'Scene Editor',
-  'scene-viewer': 'Scene Viewer'
+  'scene-viewer': 'Scene Viewer',
+  'babylon-lite-demo': 'Babylon Lite Demo'
 };
 
 const MODE_TITLE_PREFIX: Record<AppMode, string> = {
   'ontology': 'Editing ontology:\u00a0',
   'scene-editor': 'Editing scene:\u00a0',
-  'scene-viewer': 'Viewing scene:\u00a0'
+  'scene-viewer': 'Viewing scene:\u00a0',
+  'babylon-lite-demo': 'Babylon Lite demo:\u00a0'
 };
 
 interface Props {
@@ -124,7 +126,7 @@ export default function TopBar({
         )}
       </div>
       <div className="topbar-center" role="tablist" aria-label="Workspace mode">
-        {(['ontology', 'scene-editor', 'scene-viewer'] as const).map((m) => (
+        {(['ontology', 'scene-editor', 'scene-viewer', 'babylon-lite-demo'] as const).map((m) => (
           <button
             key={m}
             type="button"

@@ -26,6 +26,7 @@ import { Scene } from '@babylonjs/core/scene';
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader';
 import { VertexBuffer } from '@babylonjs/core/Buffers/buffer';
 import { RegisterGLTFFileLoader } from '@babylonjs/loaders/glTF/glTFFileLoader.pure';
+import { RegisterGLTF2Loader } from '@babylonjs/loaders/glTF/2.0/glTFLoader.pure';
 import { OBJFileLoader, RegisterOBJFileLoader } from '@babylonjs/loaders/OBJ/objFileLoader.pure';
 import { GridMaterial } from '@babylonjs/materials/grid/gridMaterial';
 import type { AssetMeshNode, PrimNode, PrimTransform, ShapeKind, SubMeshInfo, ToolMode } from '../types';
@@ -37,6 +38,7 @@ let objLoaderConfigured = false;
 let sceneLoadersRegistered = false;
 function ensureSceneLoadersRegistered(): void {
   if (sceneLoadersRegistered) return;
+  RegisterGLTF2Loader();
   RegisterGLTFFileLoader();
   RegisterOBJFileLoader();
   sceneLoadersRegistered = true;

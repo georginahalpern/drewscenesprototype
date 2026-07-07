@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Matrix } from '@babylonjs/core/Maths/math.vector.pure';
 import BottomPanel from './components/BottomPanel';
+import BabylonLiteDemo from './components/BabylonLiteDemo';
 import ContextMenu, {
   type ContextMenuItem
 } from './components/ContextMenu';
@@ -138,6 +139,8 @@ export default function App() {
   // Top-level workspace mode. Ontology Editor is the default; Scene Editor /
   // Scene Viewer switch the left-rail layout (Conditions panel appears in
   // Scene Editor mode) without touching the underlying ontology state.
+  // Babylon Lite Demo renders a separate test surface with a lightweight
+  // scene built against the babylon-lite API.
   const [mode, setMode] = useState<AppMode>('ontology');
   // Scene (formerly Hierarchy) slide-out is hidden by default and toggled
   // from the topbar.
@@ -2310,27 +2313,38 @@ export default function App() {
         onModeChange={setMode}
       />
       <main className="viewport-area">
-        <Viewport
-          prims={prims}
-          tool={tool}
-          selectedId={selectedId}
-          selectedIds={selectedIds}
-          selectedMeshUid={selectedMeshUid}
-          theme={theme}
-          focusSignal={focusSignal}
-          snapEnabled={snapEnabled}
-          onShapeDropped={handleShapeDropped}
-          onAssetDropped={handleAssetDropped}
-          onSelect={handleViewportSelect}
-          onTransform={handleTransform}
-          onTransformMany={handleTransformMany}
-          onAssetMeshesLoaded={handleAssetMeshesLoaded}
-          onSubMeshInfoChange={setSubMeshInfo}
-          onContextMenu={handleContextMenu}
-          onBeginTransformBatch={handleBeginTransformBatch}
-          onEndTransformBatch={handleEndTransformBatch}
-          dropEnabled={mode !== 'scene-editor'}
-        />
+        {mode === 'babylon-lite-demo' ? (
+          <BabylonLiteDemo
+            prims={prims}
+            theme={theme}
+            tool={tool}
+            dropEnabled={true}
+            onShapeDropped={handleShapeDropped}
+            onAssetDropped={handleAssetDropped}
+          />
+        ) : (
+          <Viewport
+            prims={prims}
+            tool={tool}
+            selectedId={selectedId}
+            selectedIds={selectedIds}
+            selectedMeshUid={selectedMeshUid}
+            theme={theme}
+            focusSignal={focusSignal}
+            snapEnabled={snapEnabled}
+            onShapeDropped={handleShapeDropped}
+            onAssetDropped={handleAssetDropped}
+            onSelect={handleViewportSelect}
+            onTransform={handleTransform}
+            onTransformMany={handleTransformMany}
+            onAssetMeshesLoaded={handleAssetMeshesLoaded}
+            onSubMeshInfoChange={setSubMeshInfo}
+            onContextMenu={handleContextMenu}
+            onBeginTransformBatch={handleBeginTransformBatch}
+            onEndTransformBatch={handleEndTransformBatch}
+            dropEnabled={mode !== 'scene-editor'}
+          />
+        )}
         <LeftToolbar
           tool={tool}
           onToolChange={setTool}
