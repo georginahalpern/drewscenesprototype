@@ -3,6 +3,10 @@ dist
 .vite
 *.log
 .DS_Store
+
+# Playwright CLI snapshot/screenshot artifacts and local verification captures.
+.playwright-cli/
+verify-*.png
 # SWA deploy leaves zip artifacts in the repo root.
 /*.zip
 
