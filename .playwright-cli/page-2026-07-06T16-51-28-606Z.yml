@@ -1,0 +1,24 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - 'button "Babylon Lite demo: Calm Antelope" [ref=e184]':
+      - generic [ref=e7]: "Babylon Lite demo:"
+      - generic [ref=e8]: Calm Antelope
+      - img [ref=e9]
+    - tablist "Workspace mode" [ref=e12]:
+      - tab "Ontology Editor" [ref=e13] [cursor=pointer]
+      - tab "Scene Editor" [ref=e14] [cursor=pointer]
+      - tab "Scene Viewer" [ref=e15] [cursor=pointer]
+      - tab "Babylon Lite Demo" [active] [selected] [ref=e16] [cursor=pointer]
+    - generic [ref=e17]:
+      - button "Load" [ref=e18] [cursor=pointer]:
+        - img [ref=e19]
+        - generic [ref=e22]: Load
+      - button "Save" [ref=e23] [cursor=pointer]:
+        - img [ref=e24]
+        - generic [ref=e28]: Save
+      - button "Settings" [ref=e30] [cursor=pointer]:
+        - img [ref=e31]
+  - main [ref=e32]:
+    - generic [ref=e185]:
+      - generic [ref=e186]: Initializing Babylon Lite demo...
+      - generic "Babylon Lite demo viewport" [ref=e187]

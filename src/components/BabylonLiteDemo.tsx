@@ -823,11 +823,22 @@ function createGizmosForNode(
      
     result.scale = createScaleGizmo(engine, utilityLayer);
     attachScaleGizmoToNode(result.scale, node as any);
-     
-    // Hide all gizmos initially
+      
+    // Hide all axes of all gizmos initially
     result.position.xGizmo.root.visible = false;
+    result.position.yGizmo.root.visible = false;
+    result.position.zGizmo.root.visible = false;
+    if (result.position.xPlaneGizmo) result.position.xPlaneGizmo.root.visible = false;
+    if (result.position.yPlaneGizmo) result.position.yPlaneGizmo.root.visible = false;
+    if (result.position.zPlaneGizmo) result.position.zPlaneGizmo.root.visible = false;
+     
     result.rotation.xGizmo.root.visible = false;
+    result.rotation.yGizmo.root.visible = false;
+    result.rotation.zGizmo.root.visible = false;
+     
     result.scale.xGizmo.root.visible = false;
+    result.scale.yGizmo.root.visible = false;
+    result.scale.zGizmo.root.visible = false;
   } catch (err) {
     console.warn('[Lite] Failed to create gizmos:', err);
   }

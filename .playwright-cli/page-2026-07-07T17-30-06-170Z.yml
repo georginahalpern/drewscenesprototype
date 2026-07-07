@@ -1,0 +1,102 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - 'button "Editing ontology: Gentle Sloth" [ref=e6]':
+      - generic [ref=e7]: "Editing ontology:"
+      - generic [ref=e8]: Gentle Sloth
+      - img [ref=e9]
+    - tablist "Workspace mode" [ref=e12]:
+      - tab "Ontology Editor" [selected] [ref=e13] [cursor=pointer]
+      - tab "Scene Editor" [ref=e14] [cursor=pointer]
+      - tab "Scene Viewer" [ref=e15] [cursor=pointer]
+      - tab "Babylon Lite Demo" [ref=e16] [cursor=pointer]
+    - generic [ref=e17]:
+      - button "Load" [ref=e18] [cursor=pointer]:
+        - img [ref=e19]
+        - generic [ref=e22]: Load
+      - button "Save" [ref=e23] [cursor=pointer]:
+        - img [ref=e24]
+        - generic [ref=e28]: Save
+      - button "Settings" [ref=e30] [cursor=pointer]:
+        - img [ref=e31]
+  - main [ref=e32]:
+    - toolbar "Camera views" [ref=e35]:
+      - generic [ref=e36]:
+        - button "Top" [ref=e37] [cursor=pointer]:
+          - img [ref=e38]
+        - button "Front" [ref=e42] [cursor=pointer]:
+          - img [ref=e43]
+        - button "Right" [ref=e47] [cursor=pointer]:
+          - img [ref=e48]
+        - button "Left" [ref=e52] [cursor=pointer]:
+          - img [ref=e53]
+        - button "Back" [ref=e58] [cursor=pointer]:
+          - img [ref=e59]
+        - button "Bottom" [ref=e64] [cursor=pointer]:
+          - img [ref=e65]
+      - button "Perspective" [pressed] [ref=e70] [cursor=pointer]:
+        - img [ref=e71]
+    - complementary [ref=e75]:
+      - button "Select" [ref=e76] [cursor=pointer]:
+        - img [ref=e77]
+      - button "Move (translate X / Y / Z)" [pressed] [ref=e79] [cursor=pointer]:
+        - img [ref=e80]
+      - button "Rotate (X / Y / Z)" [ref=e86] [cursor=pointer]:
+        - img [ref=e87]
+      - button "Scale" [ref=e90] [cursor=pointer]:
+        - img [ref=e91]
+      - button "Disable snap to grid" [pressed] [ref=e97] [cursor=pointer]:
+        - img [ref=e98]
+      - button "Measure" [ref=e109] [cursor=pointer]:
+        - img [ref=e110]
+      - button "Focus camera" [ref=e116] [cursor=pointer]:
+        - img [ref=e117]
+      - button "Show viewport panel" [ref=e120] [cursor=pointer]:
+        - img [ref=e121]
+  - complementary [ref=e125]:
+    - generic [ref=e126]:
+      - generic [ref=e127]: Viewport
+      - button "Close viewport panel" [ref=e128] [cursor=pointer]: ×
+    - list [ref=e130]:
+      - listitem [ref=e131]:
+        - generic [ref=e132]: Scene
+        - generic [ref=e133]: No prims yet. Drag a shape into the viewport.
+  - generic [ref=e134]:
+    - complementary [ref=e135]:
+      - generic [ref=e136]:
+        - generic [ref=e137]: Entity Models
+        - button "Add entity type" [ref=e138] [cursor=pointer]:
+          - img [ref=e139]
+      - generic [ref=e141]:
+        - searchbox "Search entity models" [ref=e143]
+        - list [ref=e144]:
+          - listitem [ref=e145]: No entity model types.
+        - generic [ref=e146]:
+          - generic [ref=e148]: Relationships
+          - generic [ref=e149]: No model relationships.
+    - complementary [ref=e150]:
+      - generic [ref=e151]:
+        - generic [ref=e152]: Entity Instances
+        - button "Add entity instance" [ref=e153] [cursor=pointer]:
+          - img [ref=e154]
+      - generic [ref=e156]:
+        - searchbox "Search entity instances" [ref=e158]
+        - list [ref=e159]:
+          - listitem [ref=e160]: No ontology instances.
+  - generic [ref=e161]:
+    - generic [ref=e162]:
+      - button "Shapes" [ref=e163] [cursor=pointer]
+      - button "Assets" [ref=e164] [cursor=pointer]
+    - generic [ref=e165]:
+      - button "Import" [ref=e166] [cursor=pointer]:
+        - generic [ref=e167]: +
+        - generic [ref=e168]: Import
+      - generic "Drag Box into the viewport" [ref=e169]:
+        - generic [ref=e171]: Box
+      - generic "Drag Cylinder into the viewport" [ref=e172]:
+        - generic [ref=e174]: Cylinder
+      - generic "Drag Sphere into the viewport" [ref=e175]:
+        - generic [ref=e177]: Sphere
+      - generic "Drag Cone into the viewport" [ref=e178]:
+        - generic [ref=e180]: Cone
+      - generic "Drag Plane into the viewport" [ref=e181]:
+        - generic [ref=e183]: Plane

@@ -1,0 +1,3000 @@
+{
+  "model": {
+    "entityTypes": [
+      {
+        "name": "USD",
+        "guid": "",
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "usd": ""
+      },
+      {
+        "name": "Hospital",
+        "description": "A new model entity type.",
+        "usd": "usd_assets/Placeholder.usda"
+      },
+      {
+        "name": "Floor",
+        "description": "A new model entity type.",
+        "usd": "usd_assets/Placeholder.usda"
+      },
+      {
+        "name": "Room",
+        "description": "A new model entity type.",
+        "usd": "usd_assets/Room.usda"
+      },
+      {
+        "name": "Bed",
+        "description": "A new model entity type.",
+        "usd": "usd_assets/HospitalBed.usda"
+      }
+    ],
+    "relationshipTypes": [
+      {
+        "name": "HasChild",
+        "description": "Connects a parent model/entity to its child model/entity."
+      },
+      {
+        "name": "HasUSD",
+        "description": "Associates an entity with its USD representation."
+      }
+    ],
+    "relationships": [
+      {
+        "type": "HasChild",
+        "source": "Hospital",
+        "target": "Floor"
+      },
+      {
+        "type": "HasChild",
+        "source": "Floor",
+        "target": "Room"
+      },
+      {
+        "type": "HasChild",
+        "source": "Room",
+        "target": "Bed"
+      }
+    ]
+  },
+  "instances": {
+    "entities": [
+      {
+        "id": "hospital-r7h5g9",
+        "type": "Hospital",
+        "name": "Hospital_1"
+      },
+      {
+        "id": "usd-uzevat",
+        "type": "USD",
+        "name": "Hospital_1 USD",
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/Placeholder.usda",
+        "topic": "",
+        "guid": "deb24973-d6f6-4eb9-98b8-f7c87ff486c1"
+      },
+      {
+        "id": "floor-n4ave9",
+        "type": "Floor",
+        "name": "Floor_1"
+      },
+      {
+        "id": "usd-ltvt3n",
+        "type": "USD",
+        "name": "Floor_1 USD",
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/Placeholder.usda",
+        "topic": "",
+        "guid": "298025a0-0bd2-4e06-a095-8347d27eac08"
+      },
+      {
+        "id": "room-ykb2u2",
+        "type": "Room",
+        "name": "Room_1"
+      },
+      {
+        "id": "usd-jcwjqs",
+        "type": "USD",
+        "name": "Room_1 USD",
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/Room.usda",
+        "topic": "",
+        "guid": "f5205764-5519-44b6-8034-634a1372e1db"
+      },
+      {
+        "id": "bed-5dqheu",
+        "type": "Bed",
+        "name": "Bed_1"
+      },
+      {
+        "id": "usd-sgjnic",
+        "type": "USD",
+        "name": "Bed_1 USD",
+        "position": {
+          "x": 3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "d8f7f1f6-ca65-412d-bc14-20d4dc341053"
+      },
+      {
+        "id": "bed-6xfz3l",
+        "type": "Bed",
+        "name": "Bed_2"
+      },
+      {
+        "id": "usd-w53x7i",
+        "type": "USD",
+        "name": "Bed_1 USD_1",
+        "position": {
+          "x": -3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "a917c14f-263f-45a6-ace6-4811b3d70921"
+      },
+      {
+        "id": "room-dbr5mn",
+        "type": "Room",
+        "name": "Room_2"
+      },
+      {
+        "id": "usd-0gjvxp",
+        "type": "USD",
+        "name": "Room_1 USD_1",
+        "position": {
+          "x": -15,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/Room.usda",
+        "topic": "",
+        "guid": "87b0b575-d99c-4b4a-852f-995489cf7a4c"
+      },
+      {
+        "id": "bed-pvo9gw",
+        "type": "Bed",
+        "name": "Bed_3"
+      },
+      {
+        "id": "usd-28smbu",
+        "type": "USD",
+        "name": "Bed_1 USD_2",
+        "position": {
+          "x": 3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "f55ba8cd-d012-4c4f-b3a6-3fea8b7fc8af"
+      },
+      {
+        "id": "bed-rwy9nl",
+        "type": "Bed",
+        "name": "Bed_4"
+      },
+      {
+        "id": "usd-3lx619",
+        "type": "USD",
+        "name": "Bed_1 USD_3",
+        "position": {
+          "x": -3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "f0a442e3-dcd3-495b-8bc1-c37c80e1dd71"
+      },
+      {
+        "id": "room-5z9dlr",
+        "type": "Room",
+        "name": "Room_3"
+      },
+      {
+        "id": "usd-zwp2qa",
+        "type": "USD",
+        "name": "Room_1 USD_2",
+        "position": {
+          "x": -30,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/Room.usda",
+        "topic": "",
+        "guid": "fb7197f8-6ce2-4728-984c-44b05475fb55"
+      },
+      {
+        "id": "bed-n7rwww",
+        "type": "Bed",
+        "name": "Bed_5"
+      },
+      {
+        "id": "usd-7991lf",
+        "type": "USD",
+        "name": "Bed_1 USD_4",
+        "position": {
+          "x": 3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "70e4e069-3583-4e23-b4b5-3e4166b7a95d"
+      },
+      {
+        "id": "bed-t1ot5w",
+        "type": "Bed",
+        "name": "Bed_6"
+      },
+      {
+        "id": "usd-ob7z5u",
+        "type": "USD",
+        "name": "Bed_1 USD_5",
+        "position": {
+          "x": -3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "9f267633-3355-4cef-a126-656429ca4155"
+      },
+      {
+        "id": "room-hrsg87",
+        "type": "Room",
+        "name": "Room_4"
+      },
+      {
+        "id": "usd-ed94yq",
+        "type": "USD",
+        "name": "Room_1 USD_3",
+        "position": {
+          "x": -15,
+          "y": 0,
+          "z": 21
+        },
+        "rotation": {
+          "x": 0,
+          "y": -3.1415926298292565,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/Room.usda",
+        "topic": "",
+        "guid": "7c2e5684-4624-472d-8301-b217f7a14cf8"
+      },
+      {
+        "id": "bed-kw5k4r",
+        "type": "Bed",
+        "name": "Bed_7"
+      },
+      {
+        "id": "usd-viwvaq",
+        "type": "USD",
+        "name": "Bed_1 USD_6",
+        "position": {
+          "x": 3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "1b160155-8d02-446a-abd5-ed604373b781"
+      },
+      {
+        "id": "bed-zgyh10",
+        "type": "Bed",
+        "name": "Bed_8"
+      },
+      {
+        "id": "usd-nxc45f",
+        "type": "USD",
+        "name": "Bed_1 USD_7",
+        "position": {
+          "x": -3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "bfb801eb-349f-4cef-b3f2-9116a9e611ba"
+      },
+      {
+        "id": "room-60vlxp",
+        "type": "Room",
+        "name": "Room_5"
+      },
+      {
+        "id": "usd-hcxl3q",
+        "type": "USD",
+        "name": "Room_1 USD_4",
+        "position": {
+          "x": -30,
+          "y": 0,
+          "z": 21
+        },
+        "rotation": {
+          "x": 0,
+          "y": -3.1415926298292565,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/Room.usda",
+        "topic": "",
+        "guid": "55ff8733-7dcf-4ad0-97c2-db025c0b4e7c"
+      },
+      {
+        "id": "bed-q6m9zl",
+        "type": "Bed",
+        "name": "Bed_9"
+      },
+      {
+        "id": "usd-vveegr",
+        "type": "USD",
+        "name": "Bed_1 USD_8",
+        "position": {
+          "x": 3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "cd893f54-a40c-40bf-a9c5-7dd8b3999b0a"
+      },
+      {
+        "id": "bed-1m0fz4",
+        "type": "Bed",
+        "name": "Bed_10"
+      },
+      {
+        "id": "usd-rb42pn",
+        "type": "USD",
+        "name": "Bed_1 USD_9",
+        "position": {
+          "x": -3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "a4cbff89-8865-4835-ad5b-4a387655a489"
+      },
+      {
+        "id": "room-0lvqf5",
+        "type": "Room",
+        "name": "Room_6"
+      },
+      {
+        "id": "usd-tu8d4e",
+        "type": "USD",
+        "name": "Room_1 USD_5",
+        "position": {
+          "x": 2.220446049250313e-16,
+          "y": 0,
+          "z": 21
+        },
+        "rotation": {
+          "x": 0,
+          "y": -3.1415926298292565,
+          "z": 0
+        },
+        "scale": {
+          "x": 1.000000834465027,
+          "y": 1,
+          "z": 1.000000834465027
+        },
+        "usd": "usd_assets/Room.usda",
+        "topic": "",
+        "guid": "630e3ae8-576e-4ab0-943d-e2cad4822546"
+      },
+      {
+        "id": "bed-kg28o7",
+        "type": "Bed",
+        "name": "Bed_11"
+      },
+      {
+        "id": "usd-qve6ny",
+        "type": "USD",
+        "name": "Bed_1 USD_10",
+        "position": {
+          "x": 3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "89fdb878-c906-4d1b-8c6d-62d77012e80b"
+      },
+      {
+        "id": "bed-tkcr9n",
+        "type": "Bed",
+        "name": "Bed_12"
+      },
+      {
+        "id": "usd-8y9ybb",
+        "type": "USD",
+        "name": "Bed_1 USD_11",
+        "position": {
+          "x": -3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "35d0850a-19e4-4238-8015-e1cf5eb0c446"
+      },
+      {
+        "id": "floor-n9k5j5",
+        "type": "Floor",
+        "name": "Floor_2"
+      },
+      {
+        "id": "usd-7ww2st",
+        "type": "USD",
+        "name": "Floor_1 USD_1",
+        "position": {
+          "x": 0,
+          "y": 6,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/Placeholder.usda",
+        "topic": "",
+        "guid": "839b117b-a963-4a1d-904a-694f50858509"
+      },
+      {
+        "id": "room-40yadx",
+        "type": "Room",
+        "name": "Room_7"
+      },
+      {
+        "id": "usd-55qmg8",
+        "type": "USD",
+        "name": "Room_1 USD_6",
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/Room.usda",
+        "topic": "",
+        "guid": "0641f074-15ba-4444-95a5-91f15edb5952"
+      },
+      {
+        "id": "bed-5x6bu1",
+        "type": "Bed",
+        "name": "Bed_13"
+      },
+      {
+        "id": "usd-eelvn2",
+        "type": "USD",
+        "name": "Bed_1 USD_12",
+        "position": {
+          "x": 3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "5bd27b07-3f09-4d30-967b-284d5c53ef8f"
+      },
+      {
+        "id": "bed-1lvqkk",
+        "type": "Bed",
+        "name": "Bed_14"
+      },
+      {
+        "id": "usd-eplk6k",
+        "type": "USD",
+        "name": "Bed_1 USD_13",
+        "position": {
+          "x": -3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "51706873-ece4-41c1-8e2a-736516689e6f"
+      },
+      {
+        "id": "room-fgpb4t",
+        "type": "Room",
+        "name": "Room_8"
+      },
+      {
+        "id": "usd-z4pqmv",
+        "type": "USD",
+        "name": "Room_1 USD_7",
+        "position": {
+          "x": -15,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/Room.usda",
+        "topic": "",
+        "guid": "ce0bb034-3e37-465a-aa72-fe748313f170"
+      },
+      {
+        "id": "bed-oh5qxx",
+        "type": "Bed",
+        "name": "Bed_15"
+      },
+      {
+        "id": "usd-wmy7ar",
+        "type": "USD",
+        "name": "Bed_1 USD_14",
+        "position": {
+          "x": 3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "47675e99-9248-4ccf-a5f7-232048e7126a"
+      },
+      {
+        "id": "bed-ntpgtn",
+        "type": "Bed",
+        "name": "Bed_16"
+      },
+      {
+        "id": "usd-jdle90",
+        "type": "USD",
+        "name": "Bed_1 USD_15",
+        "position": {
+          "x": -3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "e81f1fa0-7373-4964-b59e-311f24578c99"
+      },
+      {
+        "id": "room-suui59",
+        "type": "Room",
+        "name": "Room_9"
+      },
+      {
+        "id": "usd-cq7xnt",
+        "type": "USD",
+        "name": "Room_1 USD_8",
+        "position": {
+          "x": -30,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/Room.usda",
+        "topic": "",
+        "guid": "58638996-035a-45e0-82ad-de6ea1f7814e"
+      },
+      {
+        "id": "bed-nwy02y",
+        "type": "Bed",
+        "name": "Bed_17"
+      },
+      {
+        "id": "usd-3b19r4",
+        "type": "USD",
+        "name": "Bed_1 USD_16",
+        "position": {
+          "x": 3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "c2c2fdbd-45f4-4a50-afef-775f11e20c88"
+      },
+      {
+        "id": "bed-xonl9r",
+        "type": "Bed",
+        "name": "Bed_18"
+      },
+      {
+        "id": "usd-1f4vky",
+        "type": "USD",
+        "name": "Bed_1 USD_17",
+        "position": {
+          "x": -3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "0e607226-25ab-4550-9932-2d11aa2de226"
+      },
+      {
+        "id": "room-7xp0dq",
+        "type": "Room",
+        "name": "Room_10"
+      },
+      {
+        "id": "usd-0gjbbw",
+        "type": "USD",
+        "name": "Room_1 USD_9",
+        "position": {
+          "x": -15,
+          "y": 0,
+          "z": 21
+        },
+        "rotation": {
+          "x": 0,
+          "y": -3.1415926298292565,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/Room.usda",
+        "topic": "",
+        "guid": "c2999315-58ca-4d7d-808d-d8028c7379b6"
+      },
+      {
+        "id": "bed-5byox4",
+        "type": "Bed",
+        "name": "Bed_19"
+      },
+      {
+        "id": "usd-ncgc0b",
+        "type": "USD",
+        "name": "Bed_1 USD_18",
+        "position": {
+          "x": 3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "a03f9b04-401c-48e3-96c3-2fbb719a2283"
+      },
+      {
+        "id": "bed-h5pdpf",
+        "type": "Bed",
+        "name": "Bed_20"
+      },
+      {
+        "id": "usd-ubo41i",
+        "type": "USD",
+        "name": "Bed_1 USD_19",
+        "position": {
+          "x": -3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "aaf9b488-0094-416d-b6a6-17015887cedf"
+      },
+      {
+        "id": "room-0m2aa7",
+        "type": "Room",
+        "name": "Room_11"
+      },
+      {
+        "id": "usd-1iny4r",
+        "type": "USD",
+        "name": "Room_1 USD_10",
+        "position": {
+          "x": -30,
+          "y": 0,
+          "z": 21
+        },
+        "rotation": {
+          "x": 0,
+          "y": -3.1415926298292565,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/Room.usda",
+        "topic": "",
+        "guid": "0dc686d3-57a5-4925-90af-eef50b0c9a5d"
+      },
+      {
+        "id": "bed-0butq6",
+        "type": "Bed",
+        "name": "Bed_21"
+      },
+      {
+        "id": "usd-ykhwbd",
+        "type": "USD",
+        "name": "Bed_1 USD_20",
+        "position": {
+          "x": 3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "592d1bf4-ce42-491e-a899-d900a990997f"
+      },
+      {
+        "id": "bed-wjg5iv",
+        "type": "Bed",
+        "name": "Bed_22"
+      },
+      {
+        "id": "usd-2bv7tg",
+        "type": "USD",
+        "name": "Bed_1 USD_21",
+        "position": {
+          "x": -3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "fb2cfcc4-ed9a-4c78-927a-3cc8c4f4a2b7"
+      },
+      {
+        "id": "room-qx7r1d",
+        "type": "Room",
+        "name": "Room_12"
+      },
+      {
+        "id": "usd-1kznj6",
+        "type": "USD",
+        "name": "Room_1 USD_11",
+        "position": {
+          "x": 2.220446049250313e-16,
+          "y": 0,
+          "z": 21
+        },
+        "rotation": {
+          "x": 0,
+          "y": -3.1415926298292565,
+          "z": 0
+        },
+        "scale": {
+          "x": 1.000000834465027,
+          "y": 1,
+          "z": 1.000000834465027
+        },
+        "usd": "usd_assets/Room.usda",
+        "topic": "",
+        "guid": "6c8eaf42-2d40-439c-b7a4-f7d08fb993fe"
+      },
+      {
+        "id": "bed-fc3slq",
+        "type": "Bed",
+        "name": "Bed_23"
+      },
+      {
+        "id": "usd-dpqux7",
+        "type": "USD",
+        "name": "Bed_1 USD_22",
+        "position": {
+          "x": 3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "3e675d42-02e5-42d4-a64a-dbd9f0ff03a4"
+      },
+      {
+        "id": "bed-suchre",
+        "type": "Bed",
+        "name": "Bed_24"
+      },
+      {
+        "id": "usd-b4nt8h",
+        "type": "USD",
+        "name": "Bed_1 USD_23",
+        "position": {
+          "x": -3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "9971435a-aa57-48b3-9a43-dd7d89d93e38"
+      },
+      {
+        "id": "floor-svg1e7",
+        "type": "Floor",
+        "name": "Floor_3"
+      },
+      {
+        "id": "usd-i55o22",
+        "type": "USD",
+        "name": "Floor_1 USD_2",
+        "position": {
+          "x": 0,
+          "y": 12,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/Placeholder.usda",
+        "topic": "",
+        "guid": "8dbf7067-19ad-4d00-8e00-e4e7aa214a5a"
+      },
+      {
+        "id": "room-uoqa6m",
+        "type": "Room",
+        "name": "Room_13"
+      },
+      {
+        "id": "usd-9ryh88",
+        "type": "USD",
+        "name": "Room_1 USD_12",
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/Room.usda",
+        "topic": "",
+        "guid": "d85b54be-b08c-4d72-98fb-e3e724c5cdd4"
+      },
+      {
+        "id": "bed-rt23ou",
+        "type": "Bed",
+        "name": "Bed_25"
+      },
+      {
+        "id": "usd-mrpmkf",
+        "type": "USD",
+        "name": "Bed_1 USD_24",
+        "position": {
+          "x": 3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "998e937c-f180-4e80-a5e6-4e41a7164c02"
+      },
+      {
+        "id": "bed-7lht8u",
+        "type": "Bed",
+        "name": "Bed_26"
+      },
+      {
+        "id": "usd-4zfme6",
+        "type": "USD",
+        "name": "Bed_1 USD_25",
+        "position": {
+          "x": -3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "48e0d861-2ab3-40c4-8e7b-a86781119619"
+      },
+      {
+        "id": "room-h02t00",
+        "type": "Room",
+        "name": "Room_14"
+      },
+      {
+        "id": "usd-b3xnsg",
+        "type": "USD",
+        "name": "Room_1 USD_13",
+        "position": {
+          "x": -15,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/Room.usda",
+        "topic": "",
+        "guid": "c92f33cc-5ed4-430b-b82d-8603d085b510"
+      },
+      {
+        "id": "bed-qll4k8",
+        "type": "Bed",
+        "name": "Bed_27"
+      },
+      {
+        "id": "usd-ykxvve",
+        "type": "USD",
+        "name": "Bed_1 USD_26",
+        "position": {
+          "x": 3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "8b36ff75-60d4-419e-9e64-73d2f4c44037"
+      },
+      {
+        "id": "bed-2v82wl",
+        "type": "Bed",
+        "name": "Bed_28"
+      },
+      {
+        "id": "usd-nbgss0",
+        "type": "USD",
+        "name": "Bed_1 USD_27",
+        "position": {
+          "x": -3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "ca83fcf3-caca-40ed-95e9-b251ebd90cd7"
+      },
+      {
+        "id": "room-5qqu5e",
+        "type": "Room",
+        "name": "Room_15"
+      },
+      {
+        "id": "usd-rdvn1i",
+        "type": "USD",
+        "name": "Room_1 USD_14",
+        "position": {
+          "x": -30,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/Room.usda",
+        "topic": "",
+        "guid": "235dd801-5ba6-4691-92b2-0892aee53df4"
+      },
+      {
+        "id": "bed-3fiygn",
+        "type": "Bed",
+        "name": "Bed_29"
+      },
+      {
+        "id": "usd-g1hws9",
+        "type": "USD",
+        "name": "Bed_1 USD_28",
+        "position": {
+          "x": 3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "4e8e594f-9540-4d71-b782-aa80501ddc27"
+      },
+      {
+        "id": "bed-l5cq8l",
+        "type": "Bed",
+        "name": "Bed_30"
+      },
+      {
+        "id": "usd-o5g3pa",
+        "type": "USD",
+        "name": "Bed_1 USD_29",
+        "position": {
+          "x": -3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "ae36d274-b9d8-4d7f-b8c6-31e15ce3b2c2"
+      },
+      {
+        "id": "room-zgr5se",
+        "type": "Room",
+        "name": "Room_16"
+      },
+      {
+        "id": "usd-8mlfmc",
+        "type": "USD",
+        "name": "Room_1 USD_15",
+        "position": {
+          "x": -15,
+          "y": 0,
+          "z": 21
+        },
+        "rotation": {
+          "x": 0,
+          "y": -3.1415926298292565,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/Room.usda",
+        "topic": "",
+        "guid": "734c36e9-510c-45db-8730-2c17b30cf19e"
+      },
+      {
+        "id": "bed-fgbknn",
+        "type": "Bed",
+        "name": "Bed_31"
+      },
+      {
+        "id": "usd-x61wns",
+        "type": "USD",
+        "name": "Bed_1 USD_30",
+        "position": {
+          "x": 3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "bb2d9399-e39a-4f56-9aba-4ed2673d47da"
+      },
+      {
+        "id": "bed-3aooz1",
+        "type": "Bed",
+        "name": "Bed_32"
+      },
+      {
+        "id": "usd-3k1tqp",
+        "type": "USD",
+        "name": "Bed_1 USD_31",
+        "position": {
+          "x": -3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "c576e695-e40f-480b-b4b6-d67ed679becb"
+      },
+      {
+        "id": "room-afotdx",
+        "type": "Room",
+        "name": "Room_17"
+      },
+      {
+        "id": "usd-5c1v40",
+        "type": "USD",
+        "name": "Room_1 USD_16",
+        "position": {
+          "x": -30,
+          "y": 0,
+          "z": 21
+        },
+        "rotation": {
+          "x": 0,
+          "y": -3.1415926298292565,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/Room.usda",
+        "topic": "",
+        "guid": "2f53cf1f-8ea2-4d6f-8392-8434cde67acc"
+      },
+      {
+        "id": "bed-r6ny3w",
+        "type": "Bed",
+        "name": "Bed_33"
+      },
+      {
+        "id": "usd-a4ecij",
+        "type": "USD",
+        "name": "Bed_1 USD_32",
+        "position": {
+          "x": 3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "e0cb33ad-71ac-4e71-a38b-03cda23c4905"
+      },
+      {
+        "id": "bed-w7zolt",
+        "type": "Bed",
+        "name": "Bed_34"
+      },
+      {
+        "id": "usd-4j3ray",
+        "type": "USD",
+        "name": "Bed_1 USD_33",
+        "position": {
+          "x": -3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "d2baf74e-5c3f-451d-86ac-9419902dccad"
+      },
+      {
+        "id": "room-73ysrd",
+        "type": "Room",
+        "name": "Room_18"
+      },
+      {
+        "id": "usd-20jino",
+        "type": "USD",
+        "name": "Room_1 USD_17",
+        "position": {
+          "x": 2.220446049250313e-16,
+          "y": 0,
+          "z": 21
+        },
+        "rotation": {
+          "x": 0,
+          "y": -3.1415926298292565,
+          "z": 0
+        },
+        "scale": {
+          "x": 1.000000834465027,
+          "y": 1,
+          "z": 1.000000834465027
+        },
+        "usd": "usd_assets/Room.usda",
+        "topic": "",
+        "guid": "693ce9f2-1f52-4ac8-ba79-33aa5ee24040"
+      },
+      {
+        "id": "bed-wztqw0",
+        "type": "Bed",
+        "name": "Bed_35"
+      },
+      {
+        "id": "usd-xrl1kh",
+        "type": "USD",
+        "name": "Bed_1 USD_34",
+        "position": {
+          "x": 3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "537113a0-980b-448e-9b8e-0cd672a1a2ff"
+      },
+      {
+        "id": "bed-0n5og8",
+        "type": "Bed",
+        "name": "Bed_36"
+      },
+      {
+        "id": "usd-ywky0c",
+        "type": "USD",
+        "name": "Bed_1 USD_35",
+        "position": {
+          "x": -3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "ef634dda-148a-4b54-b554-7a024d6a5812"
+      },
+      {
+        "id": "floor-8k3kmh",
+        "type": "Floor",
+        "name": "Floor_4"
+      },
+      {
+        "id": "usd-al0p6i",
+        "type": "USD",
+        "name": "Floor_1 USD_3",
+        "position": {
+          "x": 0,
+          "y": 18,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/Placeholder.usda",
+        "topic": "",
+        "guid": "d47dd85c-af2e-4834-b39c-c97024ea33ec"
+      },
+      {
+        "id": "room-1pf169",
+        "type": "Room",
+        "name": "Room_19"
+      },
+      {
+        "id": "usd-mygepx",
+        "type": "USD",
+        "name": "Room_1 USD_18",
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/Room.usda",
+        "topic": "",
+        "guid": "c0f0b539-dbc7-4c8c-94d2-01377b157aa0"
+      },
+      {
+        "id": "bed-t8830e",
+        "type": "Bed",
+        "name": "Bed_37"
+      },
+      {
+        "id": "usd-18sa6x",
+        "type": "USD",
+        "name": "Bed_1 USD_36",
+        "position": {
+          "x": 3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "e40e41b1-83ec-421c-8f7d-7f5b739a3157"
+      },
+      {
+        "id": "bed-5erc4d",
+        "type": "Bed",
+        "name": "Bed_38"
+      },
+      {
+        "id": "usd-8szqoh",
+        "type": "USD",
+        "name": "Bed_1 USD_37",
+        "position": {
+          "x": -3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "3d067d1e-e258-45d7-9fd9-7fadee56b6db"
+      },
+      {
+        "id": "room-ylaste",
+        "type": "Room",
+        "name": "Room_20"
+      },
+      {
+        "id": "usd-zosqds",
+        "type": "USD",
+        "name": "Room_1 USD_19",
+        "position": {
+          "x": -15,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/Room.usda",
+        "topic": "",
+        "guid": "adfb4f93-9b81-4b22-8845-894a0e1d3530"
+      },
+      {
+        "id": "bed-m3g4eq",
+        "type": "Bed",
+        "name": "Bed_39"
+      },
+      {
+        "id": "usd-bloki2",
+        "type": "USD",
+        "name": "Bed_1 USD_38",
+        "position": {
+          "x": 3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "93473d3d-f3dd-427b-ae70-c4efa3369326"
+      },
+      {
+        "id": "bed-mhdi9x",
+        "type": "Bed",
+        "name": "Bed_40"
+      },
+      {
+        "id": "usd-e96dcu",
+        "type": "USD",
+        "name": "Bed_1 USD_39",
+        "position": {
+          "x": -3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "65483623-8cf2-4131-bc83-75e9a82c839d"
+      },
+      {
+        "id": "room-z2wwso",
+        "type": "Room",
+        "name": "Room_21"
+      },
+      {
+        "id": "usd-oobz9s",
+        "type": "USD",
+        "name": "Room_1 USD_20",
+        "position": {
+          "x": -30,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/Room.usda",
+        "topic": "",
+        "guid": "e63e00b9-c155-4e9e-b990-139af88b66cb"
+      },
+      {
+        "id": "bed-e622i6",
+        "type": "Bed",
+        "name": "Bed_41"
+      },
+      {
+        "id": "usd-crhg4j",
+        "type": "USD",
+        "name": "Bed_1 USD_40",
+        "position": {
+          "x": 3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "683cba2e-1f10-44d4-8c9d-8ff9afdcea02"
+      },
+      {
+        "id": "bed-cs398r",
+        "type": "Bed",
+        "name": "Bed_42"
+      },
+      {
+        "id": "usd-trvkda",
+        "type": "USD",
+        "name": "Bed_1 USD_41",
+        "position": {
+          "x": -3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "bed7302c-e1fa-4f4e-9b22-4c93b0764908"
+      },
+      {
+        "id": "room-qs4ny7",
+        "type": "Room",
+        "name": "Room_22"
+      },
+      {
+        "id": "usd-2s15r2",
+        "type": "USD",
+        "name": "Room_1 USD_21",
+        "position": {
+          "x": -15,
+          "y": 0,
+          "z": 21
+        },
+        "rotation": {
+          "x": 0,
+          "y": -3.1415926298292565,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/Room.usda",
+        "topic": "",
+        "guid": "fa1167a4-3b28-47fc-88d5-409e40f4c7c8"
+      },
+      {
+        "id": "bed-hhdkb4",
+        "type": "Bed",
+        "name": "Bed_43"
+      },
+      {
+        "id": "usd-xcj2r2",
+        "type": "USD",
+        "name": "Bed_1 USD_42",
+        "position": {
+          "x": 3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "3237424c-f338-4a29-ba47-2e90bea2e31f"
+      },
+      {
+        "id": "bed-tttu0u",
+        "type": "Bed",
+        "name": "Bed_44"
+      },
+      {
+        "id": "usd-f9mv4h",
+        "type": "USD",
+        "name": "Bed_1 USD_43",
+        "position": {
+          "x": -3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "4f226430-2015-4a7a-9890-028377f27152"
+      },
+      {
+        "id": "room-saw2kj",
+        "type": "Room",
+        "name": "Room_23"
+      },
+      {
+        "id": "usd-y3ejmw",
+        "type": "USD",
+        "name": "Room_1 USD_22",
+        "position": {
+          "x": -30,
+          "y": 0,
+          "z": 21
+        },
+        "rotation": {
+          "x": 0,
+          "y": -3.1415926298292565,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/Room.usda",
+        "topic": "",
+        "guid": "3d6cd854-ff6c-4566-be29-780661e2348e"
+      },
+      {
+        "id": "bed-c0kgxk",
+        "type": "Bed",
+        "name": "Bed_45"
+      },
+      {
+        "id": "usd-ray1xc",
+        "type": "USD",
+        "name": "Bed_1 USD_44",
+        "position": {
+          "x": 3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "5839e1e6-3ba2-4f4f-8823-9cd340b92305"
+      },
+      {
+        "id": "bed-1gxjcn",
+        "type": "Bed",
+        "name": "Bed_46"
+      },
+      {
+        "id": "usd-hduo2l",
+        "type": "USD",
+        "name": "Bed_1 USD_45",
+        "position": {
+          "x": -3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "c82d80a9-9910-4210-aff4-8d004242e757"
+      },
+      {
+        "id": "room-cgh2d7",
+        "type": "Room",
+        "name": "Room_24"
+      },
+      {
+        "id": "usd-946qu4",
+        "type": "USD",
+        "name": "Room_1 USD_23",
+        "position": {
+          "x": 2.220446049250313e-16,
+          "y": 0,
+          "z": 21
+        },
+        "rotation": {
+          "x": 0,
+          "y": -3.1415926298292565,
+          "z": 0
+        },
+        "scale": {
+          "x": 1.000000834465027,
+          "y": 1,
+          "z": 1.000000834465027
+        },
+        "usd": "usd_assets/Room.usda",
+        "topic": "",
+        "guid": "b2bfa6b1-15f1-46bb-9400-21a86b78b3df"
+      },
+      {
+        "id": "bed-yzulkk",
+        "type": "Bed",
+        "name": "Bed_47"
+      },
+      {
+        "id": "usd-z40jdw",
+        "type": "USD",
+        "name": "Bed_1 USD_46",
+        "position": {
+          "x": 3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "f1ad8f66-4ba6-45f0-9b9c-3eacf1e4e69e"
+      },
+      {
+        "id": "bed-ttdsto",
+        "type": "Bed",
+        "name": "Bed_48"
+      },
+      {
+        "id": "usd-tpdr58",
+        "type": "USD",
+        "name": "Bed_1 USD_47",
+        "position": {
+          "x": -3,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        "usd": "usd_assets/HospitalBed.usda",
+        "topic": "",
+        "guid": "dc7fc2e5-e91a-457f-968a-4ba6c3d71e6c"
+      }
+    ],
+    "relationships": [
+      {
+        "type": "HasUSD",
+        "source": "hospital-r7h5g9",
+        "target": "usd-uzevat"
+      },
+      {
+        "type": "HasUSD",
+        "source": "floor-n4ave9",
+        "target": "usd-ltvt3n"
+      },
+      {
+        "type": "HasChild",
+        "source": "hospital-r7h5g9",
+        "target": "floor-n4ave9"
+      },
+      {
+        "type": "HasUSD",
+        "source": "room-ykb2u2",
+        "target": "usd-jcwjqs"
+      },
+      {
+        "type": "HasChild",
+        "source": "floor-n4ave9",
+        "target": "room-ykb2u2"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-5dqheu",
+        "target": "usd-sgjnic"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-ykb2u2",
+        "target": "bed-5dqheu"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-6xfz3l",
+        "target": "usd-w53x7i"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-ykb2u2",
+        "target": "bed-6xfz3l"
+      },
+      {
+        "type": "HasUSD",
+        "source": "room-dbr5mn",
+        "target": "usd-0gjvxp"
+      },
+      {
+        "type": "HasChild",
+        "source": "floor-n4ave9",
+        "target": "room-dbr5mn"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-pvo9gw",
+        "target": "usd-28smbu"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-dbr5mn",
+        "target": "bed-pvo9gw"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-rwy9nl",
+        "target": "usd-3lx619"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-dbr5mn",
+        "target": "bed-rwy9nl"
+      },
+      {
+        "type": "HasUSD",
+        "source": "room-5z9dlr",
+        "target": "usd-zwp2qa"
+      },
+      {
+        "type": "HasChild",
+        "source": "floor-n4ave9",
+        "target": "room-5z9dlr"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-n7rwww",
+        "target": "usd-7991lf"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-5z9dlr",
+        "target": "bed-n7rwww"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-t1ot5w",
+        "target": "usd-ob7z5u"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-5z9dlr",
+        "target": "bed-t1ot5w"
+      },
+      {
+        "type": "HasUSD",
+        "source": "room-hrsg87",
+        "target": "usd-ed94yq"
+      },
+      {
+        "type": "HasChild",
+        "source": "floor-n4ave9",
+        "target": "room-hrsg87"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-kw5k4r",
+        "target": "usd-viwvaq"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-hrsg87",
+        "target": "bed-kw5k4r"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-zgyh10",
+        "target": "usd-nxc45f"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-hrsg87",
+        "target": "bed-zgyh10"
+      },
+      {
+        "type": "HasUSD",
+        "source": "room-60vlxp",
+        "target": "usd-hcxl3q"
+      },
+      {
+        "type": "HasChild",
+        "source": "floor-n4ave9",
+        "target": "room-60vlxp"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-q6m9zl",
+        "target": "usd-vveegr"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-60vlxp",
+        "target": "bed-q6m9zl"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-1m0fz4",
+        "target": "usd-rb42pn"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-60vlxp",
+        "target": "bed-1m0fz4"
+      },
+      {
+        "type": "HasUSD",
+        "source": "room-0lvqf5",
+        "target": "usd-tu8d4e"
+      },
+      {
+        "type": "HasChild",
+        "source": "floor-n4ave9",
+        "target": "room-0lvqf5"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-kg28o7",
+        "target": "usd-qve6ny"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-0lvqf5",
+        "target": "bed-kg28o7"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-tkcr9n",
+        "target": "usd-8y9ybb"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-0lvqf5",
+        "target": "bed-tkcr9n"
+      },
+      {
+        "type": "HasUSD",
+        "source": "floor-n9k5j5",
+        "target": "usd-7ww2st"
+      },
+      {
+        "type": "HasChild",
+        "source": "hospital-r7h5g9",
+        "target": "floor-n9k5j5"
+      },
+      {
+        "type": "HasUSD",
+        "source": "room-40yadx",
+        "target": "usd-55qmg8"
+      },
+      {
+        "type": "HasChild",
+        "source": "floor-n9k5j5",
+        "target": "room-40yadx"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-5x6bu1",
+        "target": "usd-eelvn2"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-40yadx",
+        "target": "bed-5x6bu1"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-1lvqkk",
+        "target": "usd-eplk6k"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-40yadx",
+        "target": "bed-1lvqkk"
+      },
+      {
+        "type": "HasUSD",
+        "source": "room-fgpb4t",
+        "target": "usd-z4pqmv"
+      },
+      {
+        "type": "HasChild",
+        "source": "floor-n9k5j5",
+        "target": "room-fgpb4t"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-oh5qxx",
+        "target": "usd-wmy7ar"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-fgpb4t",
+        "target": "bed-oh5qxx"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-ntpgtn",
+        "target": "usd-jdle90"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-fgpb4t",
+        "target": "bed-ntpgtn"
+      },
+      {
+        "type": "HasUSD",
+        "source": "room-suui59",
+        "target": "usd-cq7xnt"
+      },
+      {
+        "type": "HasChild",
+        "source": "floor-n9k5j5",
+        "target": "room-suui59"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-nwy02y",
+        "target": "usd-3b19r4"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-suui59",
+        "target": "bed-nwy02y"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-xonl9r",
+        "target": "usd-1f4vky"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-suui59",
+        "target": "bed-xonl9r"
+      },
+      {
+        "type": "HasUSD",
+        "source": "room-7xp0dq",
+        "target": "usd-0gjbbw"
+      },
+      {
+        "type": "HasChild",
+        "source": "floor-n9k5j5",
+        "target": "room-7xp0dq"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-5byox4",
+        "target": "usd-ncgc0b"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-7xp0dq",
+        "target": "bed-5byox4"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-h5pdpf",
+        "target": "usd-ubo41i"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-7xp0dq",
+        "target": "bed-h5pdpf"
+      },
+      {
+        "type": "HasUSD",
+        "source": "room-0m2aa7",
+        "target": "usd-1iny4r"
+      },
+      {
+        "type": "HasChild",
+        "source": "floor-n9k5j5",
+        "target": "room-0m2aa7"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-0butq6",
+        "target": "usd-ykhwbd"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-0m2aa7",
+        "target": "bed-0butq6"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-wjg5iv",
+        "target": "usd-2bv7tg"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-0m2aa7",
+        "target": "bed-wjg5iv"
+      },
+      {
+        "type": "HasUSD",
+        "source": "room-qx7r1d",
+        "target": "usd-1kznj6"
+      },
+      {
+        "type": "HasChild",
+        "source": "floor-n9k5j5",
+        "target": "room-qx7r1d"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-fc3slq",
+        "target": "usd-dpqux7"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-qx7r1d",
+        "target": "bed-fc3slq"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-suchre",
+        "target": "usd-b4nt8h"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-qx7r1d",
+        "target": "bed-suchre"
+      },
+      {
+        "type": "HasUSD",
+        "source": "floor-svg1e7",
+        "target": "usd-i55o22"
+      },
+      {
+        "type": "HasChild",
+        "source": "hospital-r7h5g9",
+        "target": "floor-svg1e7"
+      },
+      {
+        "type": "HasUSD",
+        "source": "room-uoqa6m",
+        "target": "usd-9ryh88"
+      },
+      {
+        "type": "HasChild",
+        "source": "floor-svg1e7",
+        "target": "room-uoqa6m"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-rt23ou",
+        "target": "usd-mrpmkf"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-uoqa6m",
+        "target": "bed-rt23ou"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-7lht8u",
+        "target": "usd-4zfme6"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-uoqa6m",
+        "target": "bed-7lht8u"
+      },
+      {
+        "type": "HasUSD",
+        "source": "room-h02t00",
+        "target": "usd-b3xnsg"
+      },
+      {
+        "type": "HasChild",
+        "source": "floor-svg1e7",
+        "target": "room-h02t00"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-qll4k8",
+        "target": "usd-ykxvve"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-h02t00",
+        "target": "bed-qll4k8"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-2v82wl",
+        "target": "usd-nbgss0"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-h02t00",
+        "target": "bed-2v82wl"
+      },
+      {
+        "type": "HasUSD",
+        "source": "room-5qqu5e",
+        "target": "usd-rdvn1i"
+      },
+      {
+        "type": "HasChild",
+        "source": "floor-svg1e7",
+        "target": "room-5qqu5e"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-3fiygn",
+        "target": "usd-g1hws9"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-5qqu5e",
+        "target": "bed-3fiygn"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-l5cq8l",
+        "target": "usd-o5g3pa"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-5qqu5e",
+        "target": "bed-l5cq8l"
+      },
+      {
+        "type": "HasUSD",
+        "source": "room-zgr5se",
+        "target": "usd-8mlfmc"
+      },
+      {
+        "type": "HasChild",
+        "source": "floor-svg1e7",
+        "target": "room-zgr5se"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-fgbknn",
+        "target": "usd-x61wns"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-zgr5se",
+        "target": "bed-fgbknn"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-3aooz1",
+        "target": "usd-3k1tqp"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-zgr5se",
+        "target": "bed-3aooz1"
+      },
+      {
+        "type": "HasUSD",
+        "source": "room-afotdx",
+        "target": "usd-5c1v40"
+      },
+      {
+        "type": "HasChild",
+        "source": "floor-svg1e7",
+        "target": "room-afotdx"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-r6ny3w",
+        "target": "usd-a4ecij"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-afotdx",
+        "target": "bed-r6ny3w"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-w7zolt",
+        "target": "usd-4j3ray"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-afotdx",
+        "target": "bed-w7zolt"
+      },
+      {
+        "type": "HasUSD",
+        "source": "room-73ysrd",
+        "target": "usd-20jino"
+      },
+      {
+        "type": "HasChild",
+        "source": "floor-svg1e7",
+        "target": "room-73ysrd"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-wztqw0",
+        "target": "usd-xrl1kh"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-73ysrd",
+        "target": "bed-wztqw0"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-0n5og8",
+        "target": "usd-ywky0c"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-73ysrd",
+        "target": "bed-0n5og8"
+      },
+      {
+        "type": "HasUSD",
+        "source": "floor-8k3kmh",
+        "target": "usd-al0p6i"
+      },
+      {
+        "type": "HasChild",
+        "source": "hospital-r7h5g9",
+        "target": "floor-8k3kmh"
+      },
+      {
+        "type": "HasUSD",
+        "source": "room-1pf169",
+        "target": "usd-mygepx"
+      },
+      {
+        "type": "HasChild",
+        "source": "floor-8k3kmh",
+        "target": "room-1pf169"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-t8830e",
+        "target": "usd-18sa6x"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-1pf169",
+        "target": "bed-t8830e"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-5erc4d",
+        "target": "usd-8szqoh"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-1pf169",
+        "target": "bed-5erc4d"
+      },
+      {
+        "type": "HasUSD",
+        "source": "room-ylaste",
+        "target": "usd-zosqds"
+      },
+      {
+        "type": "HasChild",
+        "source": "floor-8k3kmh",
+        "target": "room-ylaste"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-m3g4eq",
+        "target": "usd-bloki2"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-ylaste",
+        "target": "bed-m3g4eq"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-mhdi9x",
+        "target": "usd-e96dcu"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-ylaste",
+        "target": "bed-mhdi9x"
+      },
+      {
+        "type": "HasUSD",
+        "source": "room-z2wwso",
+        "target": "usd-oobz9s"
+      },
+      {
+        "type": "HasChild",
+        "source": "floor-8k3kmh",
+        "target": "room-z2wwso"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-e622i6",
+        "target": "usd-crhg4j"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-z2wwso",
+        "target": "bed-e622i6"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-cs398r",
+        "target": "usd-trvkda"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-z2wwso",
+        "target": "bed-cs398r"
+      },
+      {
+        "type": "HasUSD",
+        "source": "room-qs4ny7",
+        "target": "usd-2s15r2"
+      },
+      {
+        "type": "HasChild",
+        "source": "floor-8k3kmh",
+        "target": "room-qs4ny7"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-hhdkb4",
+        "target": "usd-xcj2r2"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-qs4ny7",
+        "target": "bed-hhdkb4"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-tttu0u",
+        "target": "usd-f9mv4h"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-qs4ny7",
+        "target": "bed-tttu0u"
+      },
+      {
+        "type": "HasUSD",
+        "source": "room-saw2kj",
+        "target": "usd-y3ejmw"
+      },
+      {
+        "type": "HasChild",
+        "source": "floor-8k3kmh",
+        "target": "room-saw2kj"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-c0kgxk",
+        "target": "usd-ray1xc"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-saw2kj",
+        "target": "bed-c0kgxk"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-1gxjcn",
+        "target": "usd-hduo2l"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-saw2kj",
+        "target": "bed-1gxjcn"
+      },
+      {
+        "type": "HasUSD",
+        "source": "room-cgh2d7",
+        "target": "usd-946qu4"
+      },
+      {
+        "type": "HasChild",
+        "source": "floor-8k3kmh",
+        "target": "room-cgh2d7"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-yzulkk",
+        "target": "usd-z40jdw"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-cgh2d7",
+        "target": "bed-yzulkk"
+      },
+      {
+        "type": "HasUSD",
+        "source": "bed-ttdsto",
+        "target": "usd-tpdr58"
+      },
+      {
+        "type": "HasChild",
+        "source": "room-cgh2d7",
+        "target": "bed-ttdsto"
+      }
+    ]
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "model": {
+    "entityTypes": [
+      {
+        "name": "USD",
+        "guid": "",
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "scale": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "usd": ""
+      }
+    ],
+    "relationshipTypes": [
+      {
+        "name": "HasChild",
+        "description": "Connects a parent model/entity to its child model/entity."
+      },
+      {
+        "name": "HasUSD",
+        "description": "Associates an entity with its USD representation."
+      }
+    ],
+    "relationships": []
+  },
+  "instances": {
+    "entities": [],
+    "relationships": []
+  }
+}
