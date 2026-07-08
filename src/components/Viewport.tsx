@@ -19,7 +19,9 @@ import { MeshBuilder } from '@babylonjs/core/Meshes/meshBuilder';
 import '@babylonjs/core/Culling/ray';
 import type { LinesMesh } from '@babylonjs/core/Meshes/linesMesh';
 import { Mesh } from '@babylonjs/core/Meshes/mesh';
+import { InstancedMesh } from '@babylonjs/core/Meshes/instancedMesh';
 import { AbstractMesh } from '@babylonjs/core/Meshes/abstractMesh';
+import { RegisterInstancedMesh } from '@babylonjs/core/Meshes/instancedMesh.pure';
 import { TransformNode } from '@babylonjs/core/Meshes/transformNode';
 import type { Node } from '@babylonjs/core/node';
 import { Scene } from '@babylonjs/core/scene';
@@ -43,6 +45,7 @@ function ensureSceneLoadersRegistered(): void {
   RegisterGLTFFileLoader();
   RegisterOBJFileLoader();
   RegisterOutlineRenderer();
+  RegisterInstancedMesh();
   sceneLoadersRegistered = true;
 }
 function ensureObjLoaderDefaults(): void {
@@ -164,8 +167,10 @@ export default function Viewport({
   const engineRef = useRef<Engine | null>(null);
   const groundRef = useRef<Mesh | null>(null);
   const gridMatRef = useRef<GridMaterial | null>(null);
-  const meshesRef = useRef<Map<string, Mesh>>(new Map());
-  const materialsRef = useRef<Map<string, StandardMaterial>>(new Map());
+  const meshesRef = useRef<Map<string, AbstractMesh>>(new Map());
+  // Base (un-selected) per-instance color for each primitive prim, so the
+  // selection effect can restore it after tinting toward SELECTION_COLOR.
+  const baseColorsRef = useRef<Map<string, Color4>>(new Map());
   /** Sub-mesh registry: babylon uniqueId (stringified) -> Node, for every
    *  node inside a loaded reference asset (TransformNodes for groups,
    *  AbstractMeshes for leaves). Used to map clicks to a specific sub-mesh
@@ -249,6 +254,10 @@ export default function Viewport({
   // outline target we add is a Mesh anyway (group transforms have no
   // geometry to tint).
   const outlinedMeshesRef = useRef<Set<Mesh>>(new Set());
+  // Primitive instances currently tinted for selection (their base color is
+  // saved in baseColorsRef so we can restore it on deselect). InstancedMesh has
+  // no renderOverlay, so selection rides the per-instance color buffer instead.
+  const tintedInstancesRef = useRef<Set<InstancedMesh>>(new Set());
   useEffect(() => {
     onDropRef.current = onShapeDropped;
   }, [onShapeDropped]);
@@ -931,7 +940,7 @@ export default function Viewport({
       window.removeEventListener('resize', onResize);
       ro.disconnect();
       meshesRef.current.clear();
-      materialsRef.current.clear();
+      baseColorsRef.current.clear();
       sceneRef.current = null;
       groundRef.current = null;
       cameraRef.current = null;
@@ -951,6 +960,7 @@ export default function Viewport({
       groupPivotRef.current?.dispose();
       groupPivotRef.current = null;
       outlinedMeshesRef.current.clear();
+      tintedInstancesRef.current.clear();
       engine.dispose();
     };
   }, []);
@@ -962,7 +972,8 @@ export default function Viewport({
     if (!scene) return;
 
     const existingMeshes = meshesRef.current;
-    const existingMats = materialsRef.current;
+    const baseColors = baseColorsRef.current;
+    const mgr = gizmoMgrRef.current;
     const seen = new Set<string>();
 
     // Wrapper around loadGltfReference that bumps loadingCount up/down so
@@ -1002,7 +1013,7 @@ export default function Viewport({
           onAssetMeshesLoadedRef.current(prim.id, []);
           mesh.metadata = { primId: prim.id };
           if (prim.assetSource) {
-            loadReference(mesh, prim.assetSource, prim.id);
+            loadReference(mesh as Mesh, prim.assetSource, prim.id);
           }
         }
       }
@@ -1038,19 +1049,35 @@ export default function Viewport({
         );
       }
 
-      let mat = existingMats.get(prim.id);
-      if (!mat) {
-        mat = new StandardMaterial(`mat-${prim.id}`, scene);
-        mat.specularColor = new Color3(0.15, 0.15, 0.15);
-        existingMats.set(prim.id, mat);
-      }
-      const { color: rgb, alpha } = parseHexColor(prim.color);
-      mat.diffuseColor = rgb;
-      mat.alpha = alpha;
-      // Reference prims carry their own PBR materials from the GLB; don't
-      // overwrite them with our flat color.
-      if (prim.kind !== 'reference') {
-        mesh.material = mat;
+      // Primitive prims are hardware instances; their color (incl. alpha)
+      // rides the per-instance `color` buffer. Group/reference roots are empty
+      // transforms with no material of their own (reference children keep the
+      // GLB's PBR materials).
+      if (mesh instanceof InstancedMesh) {
+        const { color: rgb, alpha } = parseHexColor(prim.color);
+        const kind = prim.kind as PrimitiveKind;
+        const wantTransparent = alpha < 1;
+        const sources = getPrimitiveSources(kind, scene);
+        // Opaque vs. transparent is decided at the material (source) level, so
+        // an alpha crossing 1 means re-instancing onto the other source.
+        if ((mesh.sourceMesh === sources.alpha) !== wantTransparent) {
+          const parent = mesh.parent;
+          const pos = mesh.position.clone();
+          const rot = (mesh.rotationQuaternion ?? Quaternion.Identity()).clone();
+          const scl = mesh.scaling.clone();
+          if (mgr?.attachedMesh === mesh) mgr.attachToMesh(null);
+          tintedInstancesRef.current.delete(mesh);
+          mesh.dispose();
+          mesh = createPrimitiveInstance(kind, prim.id, wantTransparent, scene);
+          mesh.parent = parent;
+          mesh.position.copyFrom(pos);
+          mesh.rotationQuaternion = rot;
+          mesh.scaling.copyFrom(scl);
+          existingMeshes.set(prim.id, mesh);
+        }
+        const base = new Color4(rgb.r, rgb.g, rgb.b, alpha);
+        baseColors.set(prim.id, base);
+        (mesh as InstancedMesh).instancedBuffers.color = base.clone();
       }
     }
 
@@ -1070,20 +1097,18 @@ export default function Viewport({
       }
     }
 
-    // Pass 3: dispose meshes/materials whose prims are gone.
-    const mgr = gizmoMgrRef.current;
+    // Pass 3: dispose meshes whose prims are gone. Instance geometry/materials
+    // live on the shared per-kind sources, so there's nothing per-prim to
+    // dispose beyond the instance itself and its cached base color.
     for (const [id, mesh] of existingMeshes) {
       if (seen.has(id)) continue;
       if (mgr?.attachedMesh === mesh) mgr.attachToMesh(null);
       clearSubMeshRegistry(subMeshRegistryRef.current, id);
       onAssetMeshesLoadedRef.current(id, []);
+      if (mesh instanceof InstancedMesh) tintedInstancesRef.current.delete(mesh);
       mesh.dispose();
       existingMeshes.delete(id);
-      const mat = existingMats.get(id);
-      if (mat) {
-        mat.dispose();
-        existingMats.delete(id);
-      }
+      baseColors.delete(id);
     }
   }, [prims]);
 
@@ -1102,55 +1127,75 @@ export default function Viewport({
         ? subMeshRegistryRef.current.get(selectedMeshUid) ?? null
         : null;
 
-    // Build the desired outlined-mesh set. HighlightLayer.addMesh requires
-    // a Mesh; group transforms and non-Mesh AbstractMesh subclasses are
-    // skipped. Empty-geometry meshes are skipped too (no silhouette to
-    // render).
-    const desired = new Set<Mesh>();
-    const addOutlineTarget = (m: AbstractMesh): void => {
+    // Build the highlight targets. Primitive prims are hardware instances and
+    // have no renderOverlay, so their selection tint rides the per-instance
+    // color buffer. Reference-asset sub-meshes are real Mesh objects and use
+    // renderOverlay as before. Empty-geometry roots (group/reference) are
+    // skipped — no silhouette to show.
+    const desiredMeshes = new Set<Mesh>();
+    const desiredInstances = new Set<InstancedMesh>();
+    const addTarget = (m: AbstractMesh): void => {
+      if (m instanceof InstancedMesh) {
+        desiredInstances.add(m);
+        return;
+      }
       if (!(m instanceof Mesh)) return;
       if (m.getTotalVertices() === 0) return;
-      desired.add(m);
+      desiredMeshes.add(m);
     };
     if (subNode) {
       // The selected sub-node can be a leaf mesh *or* an intermediate group
       // (e.g. `Object331` / `04 - HVP01` in OBJ assets, which load as a
       // TransformNode with primitive child meshes). For groups, the node
-      // itself has no geometry, so outline every descendant mesh so the
-      // whole group lights up.
-      if (subNode instanceof AbstractMesh) addOutlineTarget(subNode);
-      for (const d of subNode.getChildMeshes(false)) addOutlineTarget(d);
+      // itself has no geometry, so light up every descendant mesh.
+      if (subNode instanceof AbstractMesh) addTarget(subNode);
+      for (const d of subNode.getChildMeshes(false)) addTarget(d);
     } else {
-      // Top-level prim selection: outline every prim in the multi-selection
-      // set. Each prim's root mesh + every descendant mesh is lit up, since
-      // asset groups carry no geometry of their own.
+      // Top-level prim selection: highlight every prim in the multi-selection
+      // set. Each prim's root + every descendant mesh is lit up, since asset
+      // groups carry no geometry of their own.
       for (const id of selectedIds) {
         const mesh = meshesRef.current.get(id);
         if (!mesh) continue;
-        addOutlineTarget(mesh);
-        for (const d of mesh.getChildMeshes(false)) addOutlineTarget(d);
+        addTarget(mesh);
+        for (const d of mesh.getChildMeshes(false)) addTarget(d);
       }
     }
 
-    // Diff against the previous outlined set so a stable selection across
-    // drag ticks (effect re-runs every time `prims` changes) does no
-    // overlay work. `renderOverlay = true` adds one extra draw call per
-    // mesh per frame (solid-color pass with alpha) — toggling it is just a
-    // flag flip, no CPU geometry work like enableEdgesRendering had.
-    const prev = outlinedMeshesRef.current;
-    for (const m of prev) {
-      if (!desired.has(m)) {
-        if (!m.isDisposed()) m.renderOverlay = false;
-      }
+    // Asset meshes: toggle renderOverlay, diffing against the previous set so a
+    // stable selection across drag ticks (this effect re-runs on every `prims`
+    // change) does no work.
+    const prevMeshes = outlinedMeshesRef.current;
+    for (const m of prevMeshes) {
+      if (!desiredMeshes.has(m) && !m.isDisposed()) m.renderOverlay = false;
     }
-    for (const m of desired) {
-      if (!prev.has(m)) {
+    for (const m of desiredMeshes) {
+      if (!prevMeshes.has(m)) {
         m.overlayColor = SELECTION_COLOR;
         m.overlayAlpha = SELECTION_OVERLAY_ALPHA;
         m.renderOverlay = true;
       }
     }
-    outlinedMeshesRef.current = desired;
+    outlinedMeshesRef.current = desiredMeshes;
+
+    // Primitive instances: tint the per-instance color toward SELECTION_COLOR,
+    // restoring the reconcile-written base color on deselect. Re-applied every
+    // run because reconcile resets the base color on each `prims` change.
+    const prevInstances = tintedInstancesRef.current;
+    for (const inst of prevInstances) {
+      if (desiredInstances.has(inst) || inst.isDisposed()) continue;
+      const pid = (inst.metadata as { primId?: string } | undefined)?.primId;
+      const base = pid ? baseColorsRef.current.get(pid) : undefined;
+      if (base) inst.instancedBuffers.color = base.clone();
+    }
+    for (const inst of desiredInstances) {
+      const pid = (inst.metadata as { primId?: string } | undefined)?.primId;
+      const base =
+        (pid ? baseColorsRef.current.get(pid) : undefined) ??
+        new Color4(1, 1, 1, 1);
+      inst.instancedBuffers.color = tintTowardSelection(base);
+    }
+    tintedInstancesRef.current = desiredInstances;
 
     // Surface the picked sub-mesh's local pose to the Properties panel.
     // Only TransformNode (and its subclass AbstractMesh) carry position +
@@ -1289,124 +1334,152 @@ export default function Viewport({
 
 type PrimitiveKind = Exclude<ShapeKind, 'group' | 'reference'>;
 
-let primitiveTemplateCachesByScene:
-  | WeakMap<Scene, Map<PrimitiveKind, Mesh>>
-  | null = null;
-function getPrimitiveTemplateCacheByScene(): WeakMap<
-  Scene,
-  Map<PrimitiveKind, Mesh>
-> {
-  if (!primitiveTemplateCachesByScene) {
-    primitiveTemplateCachesByScene = new WeakMap();
-  }
-  return primitiveTemplateCachesByScene;
+function isPrimitiveKind(kind: ShapeKind): kind is PrimitiveKind {
+  return kind !== 'group' && kind !== 'reference';
 }
 
-function createPrimitiveTemplate(kind: PrimitiveKind, scene: Scene): Mesh {
-  const name = `__primitive-template-${kind}`;
-  let mesh: Mesh;
+// One pair of hidden "source" meshes per primitive kind, per scene. Every
+// dropped primitive is a hardware instance (`createInstance`) of one of these
+// sources, so each kind's geometry is uploaded once and all copies of a kind
+// draw in a single batched call. Per-instance color (incl. alpha) rides an
+// instanced `color` buffer that StandardMaterial reads automatically
+// (INSTANCESCOLOR).
+//
+// Two sources per kind because Babylon decides the opaque-vs-transparent
+// render pass at the *material* level: opaque prims instance the opaque
+// source; alpha (< 1) prims instance the alpha-blended source.
+type PrimitiveSources = { opaque: Mesh; alpha: Mesh };
+
+let instanceSourcesByScene:
+  | WeakMap<Scene, Map<PrimitiveKind, PrimitiveSources>>
+  | null = null;
+function getInstanceSourcesByScene(): WeakMap<
+  Scene,
+  Map<PrimitiveKind, PrimitiveSources>
+> {
+  if (!instanceSourcesByScene) {
+    instanceSourcesByScene = new WeakMap();
+  }
+  return instanceSourcesByScene;
+}
+
+function buildPrimitiveGeometry(
+  kind: PrimitiveKind,
+  name: string,
+  scene: Scene
+): Mesh {
   switch (kind) {
     case 'box':
-      mesh = MeshBuilder.CreateBox(name, { size: 1 }, scene);
-      break;
+      return MeshBuilder.CreateBox(name, { size: 1 }, scene);
     case 'cylinder':
-      mesh = MeshBuilder.CreateCylinder(
-        name,
-        { diameter: 1, height: 1 },
-        scene
-      );
-      break;
+      return MeshBuilder.CreateCylinder(name, { diameter: 1, height: 1 }, scene);
     case 'sphere':
-      mesh = MeshBuilder.CreateSphere(name, { diameter: 1 }, scene);
-      break;
+      return MeshBuilder.CreateSphere(name, { diameter: 1 }, scene);
     case 'plane':
-      mesh = MeshBuilder.CreatePlane(
+      return MeshBuilder.CreatePlane(
         name,
         { size: 1, sideOrientation: Mesh.DOUBLESIDE },
         scene
       );
-      // Keep "plane" aligned to the editor's XZ floor convention.
-      mesh.rotation.x = Math.PI / 2;
-      break;
     case 'cone':
-      mesh = MeshBuilder.CreateCylinder(
+      return MeshBuilder.CreateCylinder(
         name,
         { diameterTop: 0, diameterBottom: 1, height: 1, tessellation: 32 },
         scene
       );
-      break;
   }
-  mesh.isVisible = false;
-  mesh.setEnabled(false);
-  mesh.isPickable = false;
-  return mesh;
 }
 
-function createPrimitiveMesh(kind: PrimitiveKind, id: string, scene: Scene): Mesh {
-  const cachesByScene = getPrimitiveTemplateCacheByScene();
-  let cache = cachesByScene.get(scene);
+function makeInstanceSource(
+  kind: PrimitiveKind,
+  transparent: boolean,
+  scene: Scene
+): Mesh {
+  const tag = transparent ? 'alpha' : 'opaque';
+  const src = buildPrimitiveGeometry(kind, `__src-${kind}-${tag}`, scene);
+  const mat = new StandardMaterial(`__srcmat-${kind}-${tag}`, scene);
+  mat.specularColor = new Color3(0.15, 0.15, 0.15);
+  if (transparent) mat.transparencyMode = Material.MATERIAL_ALPHABLEND;
+  src.material = mat;
+  // Per-instance RGBA color. StandardMaterial picks this up automatically once
+  // the mesh has instances (the INSTANCESCOLOR shader define).
+  src.registerInstancedBuffer('color', 4);
+  src.instancedBuffers.color = new Color4(1, 1, 1, 1);
+  // The source itself is never shown or picked; its instances still render.
+  src.isVisible = false;
+  src.isPickable = false;
+  return src;
+}
+
+function getPrimitiveSources(kind: PrimitiveKind, scene: Scene): PrimitiveSources {
+  const byScene = getInstanceSourcesByScene();
+  let cache = byScene.get(scene);
   if (!cache) {
     cache = new Map();
-    cachesByScene.set(scene, cache);
+    byScene.set(scene, cache);
   }
-  let template = cache.get(kind);
-  if (!template || template.isDisposed()) {
-    template = createPrimitiveTemplate(kind, scene);
-    cache.set(kind, template);
+  let sources = cache.get(kind);
+  if (!sources || sources.opaque.isDisposed() || sources.alpha.isDisposed()) {
+    sources = {
+      opaque: makeInstanceSource(kind, false, scene),
+      alpha: makeInstanceSource(kind, true, scene)
+    };
+    cache.set(kind, sources);
   }
-  const clone = template.clone(id);
-  if (!clone) {
-    throw new Error(`Failed to clone primitive template for kind "${kind}"`);
-  }
-  clone.isVisible = true;
-  clone.setEnabled(true);
-  clone.isPickable = true;
-  return clone;
+  return sources;
+}
+
+function createPrimitiveInstance(
+  kind: PrimitiveKind,
+  id: string,
+  transparent: boolean,
+  scene: Scene
+): InstancedMesh {
+  const sources = getPrimitiveSources(kind, scene);
+  const inst = (transparent ? sources.alpha : sources.opaque).createInstance(id);
+  inst.isPickable = true;
+  return inst;
 }
 
 function buildShapeMesh(
   prim: PrimNode,
   scene: Scene,
   loadReference: (parent: Mesh, assetSource: string, primId: string) => void
-): Mesh {
-  let mesh: Mesh;
-  switch (prim.kind) {
-    case 'box':
-      mesh = createPrimitiveMesh('box', prim.id, scene);
-      break;
-    case 'cylinder':
-      mesh = createPrimitiveMesh('cylinder', prim.id, scene);
-      break;
-    case 'sphere':
-      mesh = createPrimitiveMesh('sphere', prim.id, scene);
-      break;
-    case 'plane':
-      mesh = createPrimitiveMesh('plane', prim.id, scene);
-      break;
-    case 'cone':
-      mesh = createPrimitiveMesh('cone', prim.id, scene);
-      break;
-    case 'group':
-      // An empty Mesh acts as a pure transform node: children parent to it,
-      // and the gizmo can attach to it, but it has no geometry to render.
-      mesh = new Mesh(prim.id, scene);
-      mesh.isPickable = false;
-      break;
-    case 'reference':
-      // Empty parent transform; the GLB's meshes get parented under it once
-      // the async glTF load completes.
-      mesh = new Mesh(prim.id, scene);
-      mesh.isPickable = false;
-      if (prim.assetSource) {
-        loadReference(mesh, prim.assetSource, prim.id);
-      }
-      break;
+): AbstractMesh {
+  let mesh: AbstractMesh;
+  if (isPrimitiveKind(prim.kind)) {
+    const { alpha } = parseHexColor(prim.color);
+    mesh = createPrimitiveInstance(prim.kind, prim.id, alpha < 1, scene);
+  } else {
+    // An empty Mesh acts as a pure transform node: children parent to it and
+    // the gizmo can attach to it, but it has no geometry of its own. For
+    // references, the GLB's meshes get parented under it once the async glTF
+    // load completes.
+    const root = new Mesh(prim.id, scene);
+    root.isPickable = false;
+    if (prim.kind === 'reference' && prim.assetSource) {
+      loadReference(root, prim.assetSource, prim.id);
+    }
+    mesh = root;
   }
   mesh.metadata = { primId: prim.id };
   // Initialize rotation as a quaternion so the rotation gizmo has something
   // to drive; the reconcile effect keeps it in sync from state.
   mesh.rotationQuaternion = Quaternion.Identity();
   return mesh;
+}
+
+// Blends a primitive's base color toward SELECTION_COLOR by
+// SELECTION_OVERLAY_ALPHA (matching the old renderOverlay tint), preserving the
+// base alpha. Used for the per-instance selection highlight.
+function tintTowardSelection(base: Color4): Color4 {
+  const a = SELECTION_OVERLAY_ALPHA;
+  return new Color4(
+    base.r * (1 - a) + SELECTION_COLOR.r * a,
+    base.g * (1 - a) + SELECTION_COLOR.g * a,
+    base.b * (1 - a) + SELECTION_COLOR.b * a,
+    base.a
+  );
 }
 
 // Accepts `#rrggbb` or `#rrggbbaa`. Falls back to a neutral grey when the
