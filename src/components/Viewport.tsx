@@ -173,6 +173,10 @@ export default function Viewport({
    *  group node) when selected. */
   const subMeshRegistryRef = useRef<Map<string, Node>>(new Map());
   const gizmoMgrRef = useRef<GizmoManager | null>(null);
+  // Shared pivot node for multi-select move/rotate. The selection keeps the
+  // gizmo attached to this node (positioned on the primary); at drag time the
+  // selection is parented under it so Babylon moves the group rigidly.
+  const groupPivotRef = useRef<TransformNode | null>(null);
   const ensureSnapRef = useRef<() => void>(() => {});
   const lastPositionGizmoRef = useRef<IPositionGizmo | null>(null);
   const lastRotationGizmoRef = useRef<IRotationGizmo | null>(null);
@@ -448,22 +452,50 @@ export default function Viewport({
       });
     };
 
-    // Group-move bookkeeping for the position gizmo. We capture the primary
-    // mesh + each secondary mesh's world position at drag start, then mirror
-    // the primary's world-space delta onto every secondary mesh on every
-    // drag tick. Drag end commits the new local positions in a single batch.
-    // Only "independent" secondaries are tracked — i.e. ones whose ancestor
-    // chain doesn't contain any other selected prim, so we don't translate
-    // a child both via its parent and again on its own.
-    type GroupMoveEntry = {
+    // Multi-select move/rotate is handled by parenting the selection under the
+    // gizmo's pivot node (see the selection effect) so Babylon's transform
+    // hierarchy does the rigid group motion. We only record which meshes were
+    // reparented so drag-end can restore them and read back their new locals.
+    // "Independent" selections exclude any prim whose ancestor is also selected
+    // (it already moves via that ancestor), avoiding double transforms.
+    type DragEntry = {
       mesh: AbstractMesh;
       primId: string;
-      startWorld: Vector3;
+      originalParent: Node | null;
     };
-    let groupMoveStart: {
-      primaryStart: Vector3;
-      others: GroupMoveEntry[];
+    let groupDrag: {
+      pivot: TransformNode;
+      entries: DragEntry[];
+      withRotation: boolean;
     } | null = null;
+
+    // Convert a (currently pivot-parented) mesh's world pose into a transform
+    // expressed in its ORIGINAL parent's space, for committing to app state.
+    const worldLocalTransform = (
+      entry: DragEntry,
+      withRotation: boolean
+    ): Partial<PrimTransform> => {
+      const mesh = entry.mesh;
+      mesh.computeWorldMatrix(true);
+      const worldPos = mesh.getAbsolutePosition();
+      let pos = worldPos;
+      let rotQ = mesh.absoluteRotationQuaternion;
+      const parent = entry.originalParent;
+      if (parent instanceof TransformNode) {
+        parent.computeWorldMatrix(true);
+        const parentWorld = parent.getWorldMatrix();
+        pos = Vector3.TransformCoordinates(worldPos, Matrix.Invert(parentWorld));
+        const pScale = new Vector3();
+        const pRot = new Quaternion();
+        const pPos = new Vector3();
+        parentWorld.decompose(pScale, pRot, pPos);
+        rotQ = Quaternion.Inverse(pRot).multiply(mesh.absoluteRotationQuaternion);
+      }
+      const e = rotQ.toEulerAngles();
+      return withRotation
+        ? { position: [pos.x, pos.y, pos.z], rotation: [e.x, e.y, e.z] }
+        : { position: [pos.x, pos.y, pos.z] };
+    };
 
     const independentSelectedIds = (allIds: string[]): string[] => {
       const set = new Set(allIds);
@@ -493,302 +525,101 @@ export default function Viewport({
       if (id) draggingIdsRef.current.delete(id);
     };
 
-    const onPositionDragStart = () => {
-      // Open a single undo batch so every per-tick transform commit during
-      // the drag collapses into one history entry (using the snapshot from
-      // BEFORE the drag).
+    const startDrag = (withRotation: boolean) => {
+      // Open a single undo batch so every per-tick commit during the drag
+      // collapses into one history entry (using the pre-drag snapshot).
       onBeginTransformBatchRef.current();
-      const primary = gizmoMgr.attachedMesh;
-      if (!primary) {
-        groupMoveStart = null;
-        return;
-      }
-      const primaryId = (primary.metadata as { primId?: string } | undefined)
-        ?.primId;
-      // Mark the primary as live-driven so reconcile doesn't fight the
-      // gizmo when we commit its position every drag tick.
-      if (primaryId) draggingIdsRef.current.add(primaryId);
+      const primaryId = selectedIdRef.current;
       const all = selectedIdsRef.current;
-      if (!primaryId || all.length <= 1) {
-        groupMoveStart = null;
+      const pivot = groupPivotRef.current;
+      // Single-target drag: the gizmo is attached straight to the prim mesh
+      // (see the selection effect). Just flag the primary as live-driven so
+      // reconcile doesn't fight the gizmo; commits go through commitFromMesh.
+      if (
+        !pivot ||
+        !primaryId ||
+        all.length <= 1 ||
+        gizmoMgr.attachedNode !== pivot
+      ) {
+        groupDrag = null;
+        if (primaryId) draggingIdsRef.current.add(primaryId);
         return;
       }
-      const others: GroupMoveEntry[] = [];
-      for (const id of independentSelectedIds(all)) {
-        if (id === primaryId) continue;
+      // Multi-select: parent the primary + every independent secondary under
+      // the pivot. setParent preserves each mesh's world pose, so nothing
+      // jumps; from here Babylon moves/rotates them rigidly as the gizmo drags
+      // the pivot — no manual per-tick delta math required.
+      const ids = new Set(independentSelectedIds(all));
+      ids.add(primaryId);
+      const entries: DragEntry[] = [];
+      for (const id of ids) {
         const mesh = meshesRef.current.get(id);
         if (!mesh) continue;
-        // Force fresh world matrices so the captured start positions match
-        // the live scene state, not a stale cache.
-        mesh.computeWorldMatrix(true);
-        others.push({
-          mesh,
-          primId: id,
-          startWorld: mesh.getAbsolutePosition().clone()
-        });
+        const originalParent = mesh.parent;
+        mesh.setParent(pivot);
+        entries.push({ mesh, primId: id, originalParent });
         draggingIdsRef.current.add(id);
       }
-      if (others.length === 0) {
-        groupMoveStart = null;
+      if (entries.length === 0) {
+        groupDrag = null;
         return;
       }
-      primary.computeWorldMatrix(true);
-      groupMoveStart = {
-        primaryStart: primary.getAbsolutePosition().clone(),
-        others
-      };
+      groupDrag = { pivot, entries, withRotation };
     };
 
-    const onPositionDrag = () => {
-      // Move secondaries first so they stay perfectly in sync with the
-      // primary on the current frame. We DO NOT commit secondaries to React
-      // state on every tick — that round-trips through render+reconcile and
-      // visibly lags behind the gizmo. The drag-end handler commits them in
-      // one batch instead. The primary's state is still committed live so
-      // the Properties panel inputs follow along.
-      const state = groupMoveStart;
-      if (state) {
-        const primary = gizmoMgr.attachedMesh;
-        if (primary) {
-          // getAbsolutePosition() returns a cached value; force a fresh
-          // world-matrix compute so the delta below reflects THIS frame's
-          // gizmo translation, not the previous frame's. Without this the
-          // secondaries trail by a frame and drag-end commits them short.
-          primary.computeWorldMatrix(true);
-          const cur = primary.getAbsolutePosition();
-          const dx = cur.x - state.primaryStart.x;
-          const dy = cur.y - state.primaryStart.y;
-          const dz = cur.z - state.primaryStart.z;
-          for (const o of state.others) {
-            const targetWorld = new Vector3(
-              o.startWorld.x + dx,
-              o.startWorld.y + dy,
-              o.startWorld.z + dz
-            );
-            const parent = o.mesh.parent;
-            if (parent && parent instanceof TransformNode) {
-              parent.computeWorldMatrix(true);
-              const inv = Matrix.Invert(parent.getWorldMatrix());
-              const local = Vector3.TransformCoordinates(targetWorld, inv);
-              o.mesh.position.copyFrom(local);
-            } else {
-              o.mesh.position.copyFrom(targetWorld);
-            }
-            o.mesh.computeWorldMatrix(true);
-          }
-        }
+    const dragTick = () => {
+      if (!groupDrag) {
+        // Single-target: commit the attached mesh's pose live.
+        commitFromMesh();
+        return;
       }
-      // Commit the primary's pose so Properties inputs update live.
-      commitFromMesh();
+      // Commit only the primary live so the Properties panel tracks the drag;
+      // secondaries are committed in one batch at drag end to avoid a
+      // render+reconcile round-trip lagging behind the gizmo every frame.
+      const primaryId = selectedIdRef.current;
+      const primary = groupDrag.entries.find((e) => e.primId === primaryId);
+      if (primary) {
+        onTransformRef.current(
+          primary.primId,
+          worldLocalTransform(primary, groupDrag.withRotation)
+        );
+      }
     };
 
-    const onPositionDragEnd = () => {
-      // Run one final group-sync from the primary's FINAL world position so
-      // the secondaries match exactly. The last onPositionDrag tick may have
-      // run before Babylon settled the gizmo on its release frame.
-      const state = groupMoveStart;
-      const primaryMesh = gizmoMgr.attachedMesh;
-      if (state && primaryMesh) {
-        primaryMesh.computeWorldMatrix(true);
-        const cur = primaryMesh.getAbsolutePosition();
-        const dx = cur.x - state.primaryStart.x;
-        const dy = cur.y - state.primaryStart.y;
-        const dz = cur.z - state.primaryStart.z;
-        for (const o of state.others) {
-          const targetWorld = new Vector3(
-            o.startWorld.x + dx,
-            o.startWorld.y + dy,
-            o.startWorld.z + dz
-          );
-          const parent = o.mesh.parent;
-          if (parent && parent instanceof TransformNode) {
-            parent.computeWorldMatrix(true);
-            const inv = Matrix.Invert(parent.getWorldMatrix());
-            const local = Vector3.TransformCoordinates(targetWorld, inv);
-            o.mesh.position.copyFrom(local);
-          } else {
-            o.mesh.position.copyFrom(targetWorld);
-          }
-        }
-      }
-      // Commit the primary first via the shared single-target path, then
-      // batch-commit every secondary mesh in one state update.
-      commitFromMesh();
-      groupMoveStart = null;
-      const primaryId = (
-        primaryMesh?.metadata as { primId?: string } | undefined
-      )?.primId;
-      if (primaryId) draggingIdsRef.current.delete(primaryId);
+    const endDrag = () => {
+      const state = groupDrag;
+      const primaryId = selectedIdRef.current;
       if (!state) {
-        // Single-selection drag still needs to close the undo batch that
-        // onPositionDragStart opened — otherwise batchingRef stays set
-        // forever and subsequent edits never produce a history entry.
+        // Single-target: commit + close the undo batch startDrag opened.
+        commitFromMesh();
+        if (primaryId) draggingIdsRef.current.delete(primaryId);
         onEndTransformBatchRef.current();
         return;
       }
-      const updates: Array<{
-        id: string;
-        t: Partial<PrimTransform>;
-      }> = state.others.map((o) => ({
-        id: o.primId,
-        t: {
-          position: [o.mesh.position.x, o.mesh.position.y, o.mesh.position.z]
-        }
-      }));
-      for (const o of state.others) draggingIdsRef.current.delete(o.primId);
-      onTransformManyRef.current(updates);
-      // Close the undo batch opened in onPositionDragStart. Done after the
-      // batch commit so the final state lands before the snapshot record.
-      onEndTransformBatchRef.current();
-    };
-
-    // Group-rotate bookkeeping for the rotation gizmo. Mirrors the position
-    // group-move flow: capture each independent secondary's world pose at
-    // drag start, then on every tick rotate them by the primary's world-
-    // space delta quaternion around the primary's start pivot.
-    type GroupRotateEntry = {
-      mesh: AbstractMesh;
-      primId: string;
-      startWorldPos: Vector3;
-      startWorldRot: Quaternion;
-    };
-    let groupRotateStart: {
-      primaryStartPos: Vector3;
-      primaryStartRotInv: Quaternion;
-      others: GroupRotateEntry[];
-    } | null = null;
-
-    const onRotationDragStart = () => {
-      onBeginTransformBatchRef.current();
-      const primary = gizmoMgr.attachedMesh;
-      if (!primary) {
-        groupRotateStart = null;
-        return;
-      }
-      const primaryId = (primary.metadata as { primId?: string } | undefined)
-        ?.primId;
-      if (primaryId) draggingIdsRef.current.add(primaryId);
-      const all = selectedIdsRef.current;
-      if (!primaryId || all.length <= 1) {
-        groupRotateStart = null;
-        return;
-      }
-      const others: GroupRotateEntry[] = [];
-      for (const id of independentSelectedIds(all)) {
-        if (id === primaryId) continue;
-        const mesh = meshesRef.current.get(id);
-        if (!mesh) continue;
-        mesh.computeWorldMatrix(true);
-        others.push({
-          mesh,
-          primId: id,
-          startWorldPos: mesh.getAbsolutePosition().clone(),
-          startWorldRot: mesh.absoluteRotationQuaternion.clone()
+      // Restore each mesh to its original parent (setParent preserves world),
+      // which also resolves its new local transform — read it straight off.
+      const updates: Array<{ id: string; t: Partial<PrimTransform> }> = [];
+      for (const entry of state.entries) {
+        entry.mesh.setParent(entry.originalParent);
+        const m = entry.mesh;
+        const e = m.rotationQuaternion
+          ? m.rotationQuaternion.toEulerAngles()
+          : m.rotation;
+        updates.push({
+          id: entry.primId,
+          t: state.withRotation
+            ? {
+                position: [m.position.x, m.position.y, m.position.z],
+                rotation: [e.x, e.y, e.z]
+              }
+            : { position: [m.position.x, m.position.y, m.position.z] }
         });
-        draggingIdsRef.current.add(id);
+        draggingIdsRef.current.delete(entry.primId);
       }
-      if (others.length === 0) {
-        groupRotateStart = null;
-        return;
-      }
-      primary.computeWorldMatrix(true);
-      groupRotateStart = {
-        primaryStartPos: primary.getAbsolutePosition().clone(),
-        primaryStartRotInv: Quaternion.Inverse(
-          primary.absoluteRotationQuaternion
-        ),
-        others
-      };
-    };
-
-    const applyGroupRotate = () => {
-      const state = groupRotateStart;
-      if (!state) return;
-      const primary = gizmoMgr.attachedMesh;
-      if (!primary) return;
-      primary.computeWorldMatrix(true);
-      // World delta: primaryNow * inverse(primaryStart). Applied first to
-      // each secondary's world rotation and then to the offset vector from
-      // the primary's start pivot so the whole group rotates rigidly.
-      const deltaWorld = primary.absoluteRotationQuaternion.multiply(
-        state.primaryStartRotInv
-      );
-      const pivot = state.primaryStartPos;
-      for (const o of state.others) {
-        const offset = o.startWorldPos.subtract(pivot);
-        const rotatedOffset = new Vector3();
-        offset.rotateByQuaternionToRef(deltaWorld, rotatedOffset);
-        const targetWorldPos = pivot.add(rotatedOffset);
-        const targetWorldRot = deltaWorld.multiply(o.startWorldRot);
-        const parent = o.mesh.parent;
-        if (parent && parent instanceof TransformNode) {
-          parent.computeWorldMatrix(true);
-          const parentWorld = parent.getWorldMatrix();
-          const invParent = Matrix.Invert(parentWorld);
-          const localPos = Vector3.TransformCoordinates(
-            targetWorldPos,
-            invParent
-          );
-          o.mesh.position.copyFrom(localPos);
-          const parentScale = new Vector3();
-          const parentRot = new Quaternion();
-          const parentPos = new Vector3();
-          parentWorld.decompose(parentScale, parentRot, parentPos);
-          const localRot = Quaternion.Inverse(parentRot).multiply(targetWorldRot);
-          if (!o.mesh.rotationQuaternion) {
-            o.mesh.rotationQuaternion = new Quaternion();
-          }
-          o.mesh.rotationQuaternion.copyFrom(localRot);
-        } else {
-          o.mesh.position.copyFrom(targetWorldPos);
-          if (!o.mesh.rotationQuaternion) {
-            o.mesh.rotationQuaternion = new Quaternion();
-          }
-          o.mesh.rotationQuaternion.copyFrom(targetWorldRot);
-        }
-        o.mesh.computeWorldMatrix(true);
-      }
-    };
-
-    const onRotationDrag = () => {
-      applyGroupRotate();
-      commitFromMesh();
-    };
-
-    const onRotationDragEnd = () => {
-      applyGroupRotate();
-      commitFromMesh();
-      const state = groupRotateStart;
-      groupRotateStart = null;
-      const primaryMesh = gizmoMgr.attachedMesh;
-      const primaryId = (
-        primaryMesh?.metadata as { primId?: string } | undefined
-      )?.primId;
-      if (primaryId) draggingIdsRef.current.delete(primaryId);
-      if (!state) {
-        onEndTransformBatchRef.current();
-        return;
-      }
-      const updates: Array<{
-        id: string;
-        t: Partial<PrimTransform>;
-      }> = state.others.map((o) => {
-        const e = o.mesh.rotationQuaternion
-          ? o.mesh.rotationQuaternion.toEulerAngles()
-          : o.mesh.rotation;
-        return {
-          id: o.primId,
-          t: {
-            position: [
-              o.mesh.position.x,
-              o.mesh.position.y,
-              o.mesh.position.z
-            ],
-            rotation: [e.x, e.y, e.z]
-          }
-        };
-      });
-      for (const o of state.others) draggingIdsRef.current.delete(o.primId);
+      // Reset the pivot so it's clean for the next drag.
+      state.pivot.rotationQuaternion?.copyFromFloats(0, 0, 0, 1);
+      state.pivot.scaling.copyFromFloats(1, 1, 1);
+      groupDrag = null;
       onTransformManyRef.current(updates);
       onEndTransformBatchRef.current();
     };
@@ -801,9 +632,9 @@ export default function Viewport({
       if (p) {
         p.snapDistance = snap ? POSITION_SNAP : 0;
         if (p !== lastPositionGizmoRef.current) {
-          p.onDragStartObservable.add(onPositionDragStart);
-          p.onDragObservable.add(onPositionDrag);
-          p.onDragEndObservable.add(onPositionDragEnd);
+          p.onDragStartObservable.add(() => startDrag(false));
+          p.onDragObservable.add(dragTick);
+          p.onDragEndObservable.add(endDrag);
           lastPositionGizmoRef.current = p;
         }
       }
@@ -815,9 +646,9 @@ export default function Viewport({
           // mesh's rotation when its scale is non-uniform and the drag stops
           // responding; world-aligned rings sidestep that entirely.
           r.updateGizmoRotationToMatchAttachedMesh = false;
-          r.onDragStartObservable.add(onRotationDragStart);
-          r.onDragObservable.add(onRotationDrag);
-          r.onDragEndObservable.add(onRotationDragEnd);
+          r.onDragStartObservable.add(() => startDrag(true));
+          r.onDragObservable.add(dragTick);
+          r.onDragEndObservable.add(endDrag);
           lastRotationGizmoRef.current = r;
         }
       }
@@ -1117,6 +948,8 @@ export default function Viewport({
       measureMarkerMatricesRef.current = null;
       measureLineRef.current = null;
       gizmoMgr.dispose();
+      groupPivotRef.current?.dispose();
+      groupPivotRef.current = null;
       outlinedMeshesRef.current.clear();
       engine.dispose();
     };
@@ -1225,6 +1058,10 @@ export default function Viewport({
     for (const prim of prims) {
       const mesh = existingMeshes.get(prim.id);
       if (!mesh) continue;
+      // Skip meshes currently parented under the group-drag pivot — reassigning
+      // their parent mid-drag would yank them off the pivot every per-tick
+      // commit. endDrag restores their real parent when the drag finishes.
+      if (draggingIdsRef.current.has(prim.id)) continue;
       const parent = prim.parentId
         ? existingMeshes.get(prim.parentId) ?? null
         : null;
@@ -1333,7 +1170,32 @@ export default function Viewport({
     mgr.rotationGizmoEnabled = wantRotate;
     mgr.scaleGizmoEnabled = wantScale;
     ensureSnapRef.current();
-    mgr.attachToMesh(primMesh);
+    // Multi-select move/rotate: attach the gizmo to a shared pivot node placed
+    // at the primary's world position, so dragging it rigidly transforms the
+    // whole group via Babylon's parenting (wired in startDrag/endDrag). Scale
+    // stays single-target (group scale isn't supported). Single selection and
+    // scale attach straight to the prim mesh.
+    const useGroupPivot =
+      !!primMesh && selectedIds.length > 1 && (wantMove || wantRotate);
+    if (useGroupPivot && primMesh) {
+      let pivot = groupPivotRef.current;
+      if (!pivot) {
+        pivot = new TransformNode('__group-pivot', primMesh.getScene());
+        pivot.rotationQuaternion = Quaternion.Identity();
+        groupPivotRef.current = pivot;
+      }
+      // Don't reposition the pivot mid-drag — its meshes are parented to it and
+      // moving it would drag them. Only re-seat it when idle.
+      if (!draggingIdsRef.current.has(selectedId ?? '')) {
+        primMesh.computeWorldMatrix(true);
+        pivot.position.copyFrom(primMesh.getAbsolutePosition());
+        pivot.rotationQuaternion?.copyFromFloats(0, 0, 0, 1);
+        pivot.scaling.copyFromFloats(1, 1, 1);
+      }
+      mgr.attachToNode(pivot);
+    } else {
+      mgr.attachToMesh(primMesh);
+    }
   }, [selectedId, selectedIds, selectedMeshUid, tool, prims]);
 
   // Measure tool side-effects: swap the canvas cursor for a crosshair and
@@ -1371,7 +1233,7 @@ export default function Viewport({
     }
     if (!target && sid) target = meshesRef.current.get(sid) ?? null;
     if (target) {
-      frameMeshInCamera(camera, target, engine);
+      frameMeshInCamera(camera, target);
       return;
     }
     camera.mode = Camera.PERSPECTIVE_CAMERA;
@@ -1550,30 +1412,16 @@ function buildShapeMesh(
 // Accepts `#rrggbb` or `#rrggbbaa`. Falls back to a neutral grey when the
 // string is malformed so a typo in a prim's color doesn't crash the scene.
 function parseHexColor(hex: string): { color: Color3; alpha: number } {
-  const m8 = /^#?([0-9a-fA-F]{8})$/.exec(hex);
-  if (m8) {
-    const v = parseInt(m8[1].slice(0, 6), 16);
-    const a = parseInt(m8[1].slice(6, 8), 16) / 255;
-    return {
-      color: new Color3(
-        ((v >> 16) & 0xff) / 255,
-        ((v >> 8) & 0xff) / 255,
-        (v & 0xff) / 255
-      ),
-      alpha: a
-    };
+  const s = hex.startsWith('#') ? hex : `#${hex}`;
+  // Babylon's Color3/Color4.FromHexString are strict about length (#rrggbb /
+  // #rrggbbaa), so pre-validate here and route to the matching parser. This
+  // leans on Babylon's own hex handling instead of hand-rolling bit math.
+  if (/^#[0-9a-fA-F]{8}$/.test(s)) {
+    const c = Color4.FromHexString(s);
+    return { color: new Color3(c.r, c.g, c.b), alpha: c.a };
   }
-  const m6 = /^#?([0-9a-fA-F]{6})$/.exec(hex);
-  if (m6) {
-    const v = parseInt(m6[1], 16);
-    return {
-      color: new Color3(
-        ((v >> 16) & 0xff) / 255,
-        ((v >> 8) & 0xff) / 255,
-        (v & 0xff) / 255
-      ),
-      alpha: 1
-    };
+  if (/^#[0-9a-fA-F]{6}$/.test(s)) {
+    return { color: Color3.FromHexString(s), alpha: 1 };
   }
   return { color: new Color3(0.7, 0.7, 0.72), alpha: 1 };
 }
@@ -1851,16 +1699,16 @@ function applyAxisColor(axisGizmo: unknown, color: Color3): void {
   const g = axisGizmo as {
     coloredMaterial?: MaybeMat;
     hoverMaterial?: MaybeMat;
-    _coloredMaterial?: MaybeMat;
-    _hoverMaterial?: MaybeMat;
     _rootMesh?: { getChildMeshes(): Array<MaybeMesh> };
   } | null;
   if (!g) return;
 
   const hover = color.scale(1.4);
-  const mainMat = g.coloredMaterial ?? g._coloredMaterial;
+  // Position / rotation / scale axis gizmos all expose public `coloredMaterial`
+  // and `hoverMaterial` getters — use those instead of the private fields.
+  const mainMat = g.coloredMaterial;
   if (mainMat) paintMaterial(mainMat, color);
-  const hoverMat = g.hoverMaterial ?? g._hoverMaterial;
+  const hoverMat = g.hoverMaterial;
   if (hoverMat) paintMaterial(hoverMat, hover);
 
   // Line and curve meshes inside the gizmo ignore their material color and
@@ -1924,25 +1772,30 @@ function applyCameraView(camera: ArcRotateCamera, view: CameraView): void {
 // alone so the user keeps their orbit angle and ortho/perspective choice.
 function frameMeshInCamera(
   camera: ArcRotateCamera,
-  mesh: TransformNode,
-  engine: Engine
+  mesh: TransformNode
 ): void {
-  const { min, max } = mesh.getHierarchyBoundingVectors(true);
-  const center = Vector3.Center(min, max);
-  const size = max.subtract(min);
-  // Empty placeholder meshes (e.g. a reference whose GLB hasn't loaded yet)
-  // report a zero-extent box; fall back to a sane radius so we don't collapse
-  // the camera onto the target.
-  let maxDim = Math.max(size.x, size.y, size.z);
-  if (!isFinite(maxDim) || maxDim < 1e-4) maxDim = 1;
-  const aspect = engine.getAspectRatio(camera);
-  const vHalf = camera.fov / 2;
-  const hHalf = Math.atan(Math.tan(vHalf) * aspect);
-  const rV = (maxDim / 2) / Math.tan(vHalf);
-  const rH = (maxDim / 2) / Math.tan(hHalf);
-  // Padding factor: > 1 leaves breathing room around the framed mesh so the
-  // user sees a bit of surrounding context instead of a tight crop.
-  const radius = Math.max(rV, rH) * 2.0;
-  camera.target.copyFrom(center);
-  camera.radius = Math.max(camera.lowerRadiusLimit ?? 0.001, radius);
+  // Gather the renderable meshes under `mesh`: the node itself when it has
+  // geometry, plus every descendant mesh for loaded reference assets.
+  const meshes = mesh
+    .getChildMeshes(false)
+    .filter((m) => m.getTotalVertices() > 0);
+  if (mesh instanceof AbstractMesh && mesh.getTotalVertices() > 0) {
+    meshes.push(mesh);
+  }
+  if (meshes.length === 0) {
+    // Empty placeholder (e.g. a reference whose GLB hasn't loaded yet): just
+    // center on it with a sane radius so we don't collapse onto the target.
+    camera.target.copyFrom(mesh.getAbsolutePosition());
+    camera.radius = Math.max(camera.lowerRadiusLimit ?? 0.001, 5);
+    return;
+  }
+  // Let Babylon frame the selection — it fits both FOV axes and leaves the
+  // current alpha/beta/mode alone. doNotUpdateMaxZ=true preserves the scene's
+  // tuned maxZ (kept tight for grid depth precision).
+  camera.zoomOn(meshes, true);
+  // Leave a little breathing room around the framed selection.
+  camera.radius = Math.max(
+    camera.lowerRadiusLimit ?? 0.001,
+    camera.radius * 1.4
+  );
 }
