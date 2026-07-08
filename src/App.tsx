@@ -2321,6 +2321,7 @@ export default function App() {
             dropEnabled={true}
             onShapeDropped={handleShapeDropped}
             onAssetDropped={handleAssetDropped}
+            onTransform={handleTransform}
           />
         ) : (
           <Viewport
