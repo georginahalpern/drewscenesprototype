@@ -113,6 +113,9 @@ export default function BabylonLiteDemo({
   const rotationGizmoRef = useRef<ReturnType<typeof createRotationGizmo> | null>(null);
   const scaleGizmoRef = useRef<ReturnType<typeof createScaleGizmo> | null>(null);
   const renderEntriesRef = useRef<Map<string, RenderEntry>>(new Map());
+  // Reverse index (lite node -> prim id) so the per-frame gizmo drag-sync can
+  // resolve the dragged node's prim in O(1) instead of scanning renderEntries.
+  const nodeToPrimIdRef = useRef<WeakMap<object, string>>(new WeakMap());
   const loadedReferencesRef = useRef<Map<string, LoadedReference>>(new Map());
   const dropEnabledRef = useRef(dropEnabled);
   const onShapeDroppedRef = useRef(onShapeDropped);
@@ -264,7 +267,9 @@ export default function BabylonLiteDemo({
           if (!dragging && !wasSyncing) return;
           wasSyncing = dragging;
 
-          const primId = findPrimIdForNode(node, renderEntriesRef.current);
+          const primId = node
+            ? nodeToPrimIdRef.current.get(node as object) ?? null
+            : null;
           if (!primId) return;
           const prim = primsRef.current.find((p) => p.id === primId);
           const transform = readNodeTransform(node, prim?.kind);
@@ -465,6 +470,7 @@ export default function BabylonLiteDemo({
       if (!entry) {
         entry = createEntryForPrim(engine, scene, prim);
         entries.set(prim.id, entry);
+        nodeToPrimIdRef.current.set(entry.node as object, prim.id);
       }
       applyPrimToNode(entry, prim);
       if (prim.kind === 'reference') {
@@ -527,7 +533,12 @@ function applyThemeToScene(
   scene.clearColor = theme === 'light'
     ? { r: 0.94, g: 0.95, b: 0.97, a: 1 }
     : { r: 0.1, g: 0.11, b: 0.13, a: 1 };
+  // Grid colors are baked at creation (readonly), so the material must be
+  // recreated per theme. Dispose the previous one first so toggling the theme
+  // doesn't leak GPU material/pipeline state.
+  const prev = ground.material as { dispose?: () => void } | undefined;
   ground.material = createLiteGridMaterial(theme);
+  prev?.dispose?.();
 }
 
 function createEntryForPrim(
@@ -582,17 +593,6 @@ function applyPrimToNode(entry: RenderEntry, prim: PrimNode): void {
     entry.material.diffuseColor = diffuse;
     entry.material.emissiveColor = [diffuse[0] * 0.06, diffuse[1] * 0.06, diffuse[2] * 0.06];
   }
-}
-
-/** Reverse lookup: find the store prim id backing a given lite node. */
-function findPrimIdForNode(
-  node: LiteNode,
-  entries: Map<string, RenderEntry>
-): string | null {
-  for (const [id, entry] of entries) {
-    if (entry.node === node) return id;
-  }
-  return null;
 }
 
 /**
