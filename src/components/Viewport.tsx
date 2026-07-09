@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import type { FunctionComponent, MutableRefObject } from 'react';
 import type { AssetContainer } from '@babylonjs/core/assetContainer';
 import { Camera } from '@babylonjs/core/Cameras/camera';
 import { ArcRotateCamera } from '@babylonjs/core/Cameras/arcRotateCamera';
@@ -154,27 +155,40 @@ const s_measureViewport = new BabylonViewport(0, 0, 0, 0);
 // `prims` change, including each drag tick).
 const s_reconcileQuat = new Quaternion();
 
-export default function Viewport({
-  prims,
-  tool,
-  selectedId,
-  selectedIds,
-  selectedMeshUid,
-  theme,
-  focusSignal,
-  onShapeDropped,
-  onAssetDropped,
-  onSelect,
-  onTransform,
-  onTransformMany,
-  onAssetMeshesLoaded,
-  onSubMeshInfoChange,
-  snapEnabled,
-  onContextMenu,
-  onBeginTransformBatch,
-  onEndTransformBatch,
-  dropEnabled = true
-}: Props) {
+// Keeps a ref pointed at the latest value of `value` so long-lived callbacks
+// (the once-attached Babylon observers / DOM listeners in this component) can
+// read fresh props/state without being re-bound. Collapses the repetitive
+// per-prop "mirror into a ref" effects into a single reusable hook.
+function useLatestRef<T>(value: T): MutableRefObject<T> {
+  const ref = useRef(value);
+  useEffect(() => {
+    ref.current = value;
+  }, [value]);
+  return ref;
+}
+
+const Viewport: FunctionComponent<Props> = (props) => {
+  const {
+    prims,
+    tool,
+    selectedId,
+    selectedIds,
+    selectedMeshUid,
+    theme,
+    focusSignal,
+    onShapeDropped,
+    onAssetDropped,
+    onSelect,
+    onTransform,
+    onTransformMany,
+    onAssetMeshesLoaded,
+    onSubMeshInfoChange,
+    snapEnabled,
+    onContextMenu,
+    onBeginTransformBatch,
+    onEndTransformBatch,
+    dropEnabled = true
+  } = props;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const sceneRef = useRef<Scene | null>(null);
   const cameraRef = useRef<ArcRotateCamera | null>(null);
@@ -207,10 +221,7 @@ export default function Viewport({
 
   // Tool mode tracked in a ref so the once-attached pointer observable can
   // branch on the current tool without being re-attached.
-  const toolRef = useRef<ToolMode>(tool);
-  useEffect(() => {
-    toolRef.current = tool;
-  }, [tool]);
+  const toolRef = useLatestRef(tool);
 
   // Measurement tool state. start/end are world-space points; null means
   // "waiting for that click". Visuals (spheres, dashed line) are owned by
@@ -234,34 +245,35 @@ export default function Viewport({
   // and decremented in a finally so a failed load also clears it.
   const [loadingCount, setLoadingCount] = useState(0);
 
-  // Latest callbacks captured so the once-attached listeners always see fresh state.
-  const onDropRef = useRef(onShapeDropped);
-  const onAssetDropRef = useRef(onAssetDropped);
-  const onSelectRef = useRef(onSelect);
-  const onTransformRef = useRef(onTransform);
-  const onTransformManyRef = useRef(onTransformMany);
-  const onAssetMeshesLoadedRef = useRef(onAssetMeshesLoaded);
-  const onSubMeshInfoChangeRef = useRef(onSubMeshInfoChange);
-  const onContextMenuRef = useRef(onContextMenu);
-  const onBeginTransformBatchRef = useRef(onBeginTransformBatch);
-  const onEndTransformBatchRef = useRef(onEndTransformBatch);
+  // Latest props captured in refs so the once-attached listeners/observers
+  // always read fresh values without being re-bound (see useLatestRef).
+  const onDropRef = useLatestRef(onShapeDropped);
+  const onAssetDropRef = useLatestRef(onAssetDropped);
+  const onSelectRef = useLatestRef(onSelect);
+  const onTransformRef = useLatestRef(onTransform);
+  const onTransformManyRef = useLatestRef(onTransformMany);
+  const onAssetMeshesLoadedRef = useLatestRef(onAssetMeshesLoaded);
+  const onSubMeshInfoChangeRef = useLatestRef(onSubMeshInfoChange);
+  const onContextMenuRef = useLatestRef(onContextMenu);
+  const onBeginTransformBatchRef = useLatestRef(onBeginTransformBatch);
+  const onEndTransformBatchRef = useLatestRef(onEndTransformBatch);
   // Latest prim list captured so the canvas right-click handler can walk to
   // the topmost ancestor of whatever was picked.
-  const primsRef = useRef<PrimNode[]>(prims);
+  const primsRef = useLatestRef(prims);
   // Snap toggle captured so the long-lived ensureSnapRef closure can read
   // the current setting without being rebuilt on every flip.
-  const snapEnabledRef = useRef(snapEnabled);
+  const snapEnabledRef = useLatestRef(snapEnabled);
   // Drop-target gating captured so the once-attached canvas listeners can
   // refuse drops in Scene Editor mode without being re-bound.
-  const dropEnabledRef = useRef(dropEnabled);
+  const dropEnabledRef = useLatestRef(dropEnabled);
   // Latest selection captured so the focus / frame effect can read it
   // without re-running every time the user clicks something new.
-  const selectedIdRef = useRef(selectedId);
-  const selectedMeshUidRef = useRef(selectedMeshUid);
+  const selectedIdRef = useLatestRef(selectedId);
+  const selectedMeshUidRef = useLatestRef(selectedMeshUid);
   // Multi-selection captured for the position-gizmo's group-move path. The
   // ref is updated by the props effect below; the gizmo's drag observer
   // reads it at drag start to pick up the current "secondary" prims.
-  const selectedIdsRef = useRef<string[]>(selectedIds);
+  const selectedIdsRef = useLatestRef(selectedIds);
   // Currently-outlined meshes. The selection effect diffs against this set
   // so a stable selection across drag ticks does no work. `renderOverlay` is
   // an AbstractMesh property, but we keep this as Set<Mesh> since every
@@ -272,56 +284,10 @@ export default function Viewport({
   // saved in baseColorsRef so we can restore it on deselect). InstancedMesh has
   // no renderOverlay, so selection rides the per-instance color buffer instead.
   const tintedInstancesRef = useRef<Set<InstancedMesh>>(new Set());
-  useEffect(() => {
-    onDropRef.current = onShapeDropped;
-  }, [onShapeDropped]);
-  useEffect(() => {
-    onAssetDropRef.current = onAssetDropped;
-  }, [onAssetDropped]);
-  useEffect(() => {
-    onSelectRef.current = onSelect;
-  }, [onSelect]);
-  useEffect(() => {
-    onTransformRef.current = onTransform;
-  }, [onTransform]);
-  useEffect(() => {
-    onTransformManyRef.current = onTransformMany;
-  }, [onTransformMany]);
-  useEffect(() => {
-    onAssetMeshesLoadedRef.current = onAssetMeshesLoaded;
-  }, [onAssetMeshesLoaded]);
-  useEffect(() => {
-    onSubMeshInfoChangeRef.current = onSubMeshInfoChange;
-  }, [onSubMeshInfoChange]);
-  useEffect(() => {
-    onContextMenuRef.current = onContextMenu;
-  }, [onContextMenu]);
-  useEffect(() => {
-    onBeginTransformBatchRef.current = onBeginTransformBatch;
-  }, [onBeginTransformBatch]);
-  useEffect(() => {
-    onEndTransformBatchRef.current = onEndTransformBatch;
-  }, [onEndTransformBatch]);
-  useEffect(() => {
-    primsRef.current = prims;
-  }, [prims]);
-  useEffect(() => {
-    selectedIdRef.current = selectedId;
-  }, [selectedId]);
-  useEffect(() => {
-    selectedMeshUidRef.current = selectedMeshUid;
-  }, [selectedMeshUid]);
-  useEffect(() => {
-    selectedIdsRef.current = selectedIds;
-  }, [selectedIds]);
   // Re-apply snap distances to the live gizmos whenever the toggle flips.
   useEffect(() => {
-    snapEnabledRef.current = snapEnabled;
     ensureSnapRef.current();
   }, [snapEnabled]);
-  useEffect(() => {
-    dropEnabledRef.current = dropEnabled;
-  }, [dropEnabled]);
 
   // One-time scene setup.
   useEffect(() => {
@@ -420,6 +386,9 @@ export default function Viewport({
     });
 
     const axisLength = 2;
+    // Match Babylon's default gizmo axis colors (positionGizmo.ts uses
+    // Color3.Red/Green/Blue().scale(0.5) for X/Y/Z) so the origin lines and
+    // the transform gizmos read as the same axes without any gizmo re-tinting.
     const xAxis = MeshBuilder.CreateLines(
       'xAxis',
       { points: [new Vector3(0, 0.001, 0), new Vector3(axisLength, 0.001, 0)] },
@@ -944,10 +913,21 @@ export default function Viewport({
     canvas.addEventListener('dragover', onDragOver);
     canvas.addEventListener('drop', onDrop);
 
-    // Right-click in the viewport is disabled by user request. We still
-    // swallow the event so the browser's default context menu doesn't pop.
+    // Right-click a prim in the viewport to open its context menu (rename,
+    // delete, group, ...). We always swallow the browser's default menu; when
+    // the pointer is over a prim we surface it to the host via onContextMenu.
+    // Primitive prims are InstancedMeshes that carry their own
+    // `metadata.primId`, so the same lookup the tap-select path uses works
+    // here for both regular meshes and instances.
     const onCanvasContextMenu = (ev: MouseEvent) => {
       ev.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const x = ev.clientX - rect.left;
+      const y = ev.clientY - rect.top;
+      const pick = scene.pick(x, y, (m) => m !== ground);
+      const mesh = pick?.hit ? pick.pickedMesh : null;
+      const id = (mesh?.metadata as { primId?: string } | undefined)?.primId;
+      if (id) onContextMenuRef.current(id, ev.clientX, ev.clientY);
     };
     canvas.addEventListener('contextmenu', onCanvasContextMenu);
 
@@ -1349,7 +1329,9 @@ export default function Viewport({
       <CameraControls view={cameraView} onChange={setCameraView} />
     </div>
   );
-}
+};
+
+export default Viewport;
 
 type PrimitiveKind = Exclude<ShapeKind, 'group' | 'reference'>;
 
@@ -1369,18 +1351,10 @@ function isPrimitiveKind(kind: ShapeKind): kind is PrimitiveKind {
 // source; alpha (< 1) prims instance the alpha-blended source.
 type PrimitiveSources = { opaque: Mesh; alpha: Mesh };
 
-let instanceSourcesByScene:
-  | WeakMap<Scene, Map<PrimitiveKind, PrimitiveSources>>
-  | null = null;
-function getInstanceSourcesByScene(): WeakMap<
+const instanceSourcesByScene = new WeakMap<
   Scene,
   Map<PrimitiveKind, PrimitiveSources>
-> {
-  if (!instanceSourcesByScene) {
-    instanceSourcesByScene = new WeakMap();
-  }
-  return instanceSourcesByScene;
-}
+>();
 
 function buildPrimitiveGeometry(
   kind: PrimitiveKind,
@@ -1418,7 +1392,15 @@ function makeInstanceSource(
   const src = buildPrimitiveGeometry(kind, `__src-${kind}-${tag}`, scene);
   const mat = new StandardMaterial(`__srcmat-${kind}-${tag}`, scene);
   mat.specularColor = new Color3(0.15, 0.15, 0.15);
-  if (transparent) mat.transparencyMode = Material.MATERIAL_ALPHABLEND;
+  if (transparent) {
+    mat.transparencyMode = Material.MATERIAL_ALPHABLEND;
+    // The per-instance `color` buffer carries RGBA, but StandardMaterial only
+    // multiplies the fragment alpha by the instance color's alpha channel when
+    // the VERTEXALPHA shader define is active — which is driven by the source
+    // mesh's `hasVertexAlpha`. Without this the alpha channel is dropped and
+    // every instance renders opaque regardless of its prim's transparency.
+    src.hasVertexAlpha = true;
+  }
   src.material = mat;
   // Per-instance RGBA color. StandardMaterial picks this up automatically once
   // the mesh has instances (the INSTANCESCOLOR shader define).
@@ -1431,11 +1413,10 @@ function makeInstanceSource(
 }
 
 function getPrimitiveSources(kind: PrimitiveKind, scene: Scene): PrimitiveSources {
-  const byScene = getInstanceSourcesByScene();
-  let cache = byScene.get(scene);
+  let cache = instanceSourcesByScene.get(scene);
   if (!cache) {
     cache = new Map();
-    byScene.set(scene, cache);
+    instanceSourcesByScene.set(scene, cache);
   }
   let sources = cache.get(kind);
   if (!sources || sources.opaque.isDisposed() || sources.alpha.isDisposed()) {
@@ -1526,18 +1507,10 @@ function parseHexColor(hex: string): { color: Color3; alpha: number } {
 // reused for N instances of the same asset — the dominant cost when a
 // scene contains many copies of e.g. HospitalBed.obj. WeakMap so disposing
 // the scene auto-evicts the cache.
-let assetContainerCachesByScene:
-  | WeakMap<Scene, Map<string, Promise<AssetContainer>>>
-  | null = null;
-function getAssetContainerCacheByScene(): WeakMap<
+const assetContainerCachesByScene = new WeakMap<
   Scene,
   Map<string, Promise<AssetContainer>>
-> {
-  if (!assetContainerCachesByScene) {
-    assetContainerCachesByScene = new WeakMap();
-  }
-  return assetContainerCachesByScene;
-}
+>();
 
 function getOrLoadAssetContainer(
   scene: Scene,
@@ -1546,11 +1519,10 @@ function getOrLoadAssetContainer(
   fileName: string,
   pluginExtension: string | undefined
 ): Promise<AssetContainer> {
-  const cachesByScene = getAssetContainerCacheByScene();
-  let cache = cachesByScene.get(scene);
+  let cache = assetContainerCachesByScene.get(scene);
   if (!cache) {
     cache = new Map();
-    cachesByScene.set(scene, cache);
+    assetContainerCachesByScene.set(scene, cache);
   }
   let pending = cache.get(cacheKey);
   if (pending) return pending;
