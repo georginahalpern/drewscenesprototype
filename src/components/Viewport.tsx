@@ -133,12 +133,6 @@ const SELECTION_COLOR = new Color3(0.35, 0.7, 1);
 // off.
 const SELECTION_OVERLAY_ALPHA = 0.25;
 
-// Match the origin axis lines below so gizmo colors read as the same axes.
-const AXIS_COLORS = {
-  x: new Color3(0.85, 0.25, 0.25),
-  y: new Color3(0.3, 0.85, 0.35),
-  z: new Color3(0.3, 0.55, 0.95)
-} as const;
 const HIDDEN_THIN_INSTANCE = Matrix.Scaling(0, 0, 0);
 
 // Fixed dash count for the live measurement line. Keeping it constant (and the
@@ -353,6 +347,8 @@ export default function Viewport({
       Vector3.Zero(),
       scene
     );
+    // Modern signature: the element param is deprecated (the camera resolves
+    // its engine's canvas). The boolean is `noPreventDefault`.
     camera.attachControl(true);
     camera.lowerRadiusLimit = 1;
     camera.upperRadiusLimit = 5000;
@@ -429,7 +425,7 @@ export default function Viewport({
       { points: [new Vector3(0, 0.001, 0), new Vector3(axisLength, 0.001, 0)] },
       scene
     );
-    xAxis.color = new Color3(0.85, 0.25, 0.25);
+    xAxis.color = Color3.Red().scale(0.5);
     xAxis.isPickable = false;
     // Draw axis lines in a higher rendering group so they sit cleanly above
     // the GridMaterial ground without depth-fighting.
@@ -440,7 +436,7 @@ export default function Viewport({
       { points: [new Vector3(0, 0.001, 0), new Vector3(0, 0.001, axisLength)] },
       scene
     );
-    zAxis.color = new Color3(0.3, 0.55, 0.95);
+    zAxis.color = Color3.Blue().scale(0.5);
     zAxis.isPickable = false;
     zAxis.renderingGroupId = 1;
 
@@ -449,7 +445,7 @@ export default function Viewport({
       { points: [new Vector3(0, 0.001, 0), new Vector3(0, axisLength, 0)] },
       scene
     );
-    yAxis.color = new Color3(0.3, 0.85, 0.35);
+    yAxis.color = Color3.Green().scale(0.5);
     yAxis.isPickable = false;
     yAxis.renderingGroupId = 1;
 
@@ -696,11 +692,6 @@ export default function Viewport({
           lastScaleGizmoRef.current = s;
         }
       }
-      // Tint runs every time because gizmo subtrees lazily mount their handle
-      // meshes; an early one-shot may run before the geometry exists.
-      if (p) tintGizmoAxes(p);
-      if (r) tintGizmoAxes(r);
-      if (s) tintGizmoAxes(s);
     };
 
     // Pick that snaps to the nearest bounding-box corner of the picked mesh
@@ -1768,70 +1759,6 @@ function sanitizeReferenceMaterial(mat: Material | null): void {
     mat.useAlphaFromAlbedoTexture = false;
     mat.alpha = 1;
   }
-}
-
-// Babylon's per-axis gizmos expose their materials as protected/internal, so
-// we type-erase to recolor consistently across position / rotation / scale.
-interface AxisLikeGizmo {
-  xGizmo: unknown;
-  yGizmo: unknown;
-  zGizmo: unknown;
-}
-
-function tintGizmoAxes(gizmo: AxisLikeGizmo): void {
-  applyAxisColor(gizmo.xGizmo, AXIS_COLORS.x);
-  applyAxisColor(gizmo.yGizmo, AXIS_COLORS.y);
-  applyAxisColor(gizmo.zGizmo, AXIS_COLORS.z);
-}
-
-type MaybeMat =
-  | (StandardMaterial & { emissiveColor: Color3; diffuseColor: Color3 })
-  | null
-  | undefined;
-type MaybeMesh = (Mesh & { color?: Color3 }) | null | undefined;
-
-function applyAxisColor(axisGizmo: unknown, color: Color3): void {
-  // Cast through unknown: Babylon's IAxisDragGizmo / IPlaneRotationGizmo /
-  // IAxisScaleGizmo interfaces don't expose the inner materials, but the
-  // concrete classes do (both as public getters and private fields).
-  const g = axisGizmo as {
-    coloredMaterial?: MaybeMat;
-    hoverMaterial?: MaybeMat;
-    _rootMesh?: { getChildMeshes(): Array<MaybeMesh> };
-  } | null;
-  if (!g) return;
-
-  const hover = color.scale(1.4);
-  // Position / rotation / scale axis gizmos all expose public `coloredMaterial`
-  // and `hoverMaterial` getters — use those instead of the private fields.
-  const mainMat = g.coloredMaterial;
-  if (mainMat) paintMaterial(mainMat, color);
-  const hoverMat = g.hoverMaterial;
-  if (hoverMat) paintMaterial(hoverMat, hover);
-
-  // Line and curve meshes inside the gizmo ignore their material color and
-  // use AbstractMesh.color. Set that on every child mesh too.
-  const root = g._rootMesh;
-  if (root && typeof root.getChildMeshes === 'function') {
-    for (const m of root.getChildMeshes()) {
-      if (!m) continue;
-      if ('color' in m) {
-        (m as { color: Color3 }).color = color;
-      }
-      const mat = m.material as MaybeMat;
-      if (mat) paintMaterial(mat, color);
-    }
-  }
-}
-
-function paintMaterial(mat: NonNullable<MaybeMat>, color: Color3): void {
-  // Render gizmo handles unlit so the color reads saturated, matching the
-  // origin axis lines (which are pure Color3 line meshes with no lighting).
-  if ('diffuseColor' in mat) mat.diffuseColor = Color3.Black();
-  if ('emissiveColor' in mat) mat.emissiveColor = color;
-  const lit = mat as { disableLighting?: boolean; specularColor?: Color3 };
-  lit.disableLighting = true;
-  if (lit.specularColor) lit.specularColor = Color3.Black();
 }
 
 // Babylon ArcRotateCamera angle conventions (Y-up):
