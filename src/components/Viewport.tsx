@@ -15,6 +15,7 @@ import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial';
 import { PBRMaterial } from '@babylonjs/core/Materials/PBR/pbrMaterial';
 import { Color3, Color4 } from '@babylonjs/core/Maths/math.color';
 import { Matrix, Quaternion, Vector3 } from '@babylonjs/core/Maths/math.vector';
+import { Viewport as BabylonViewport } from '@babylonjs/core/Maths/math.viewport';
 import { MeshBuilder } from '@babylonjs/core/Meshes/meshBuilder';
 import '@babylonjs/core/Culling/ray';
 import type { LinesMesh } from '@babylonjs/core/Meshes/linesMesh';
@@ -25,7 +26,7 @@ import { RegisterInstancedMesh } from '@babylonjs/core/Meshes/instancedMesh.pure
 import { TransformNode } from '@babylonjs/core/Meshes/transformNode';
 import type { Node } from '@babylonjs/core/node';
 import { Scene } from '@babylonjs/core/scene';
-import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader';
+import { LoadAssetContainerAsync } from '@babylonjs/core/Loading/sceneLoader';
 import { VertexBuffer } from '@babylonjs/core/Buffers/buffer';
 import { RegisterOutlineRenderer } from '@babylonjs/core/Rendering/outlineRenderer.pure';
 import { RegisterGLTFFileLoader } from '@babylonjs/loaders/glTF/glTFFileLoader.pure';
@@ -139,6 +140,25 @@ const AXIS_COLORS = {
   z: new Color3(0.3, 0.55, 0.95)
 } as const;
 const HIDDEN_THIN_INSTANCE = Matrix.Scaling(0, 0, 0);
+
+// Fixed dash count for the live measurement line. Keeping it constant (and the
+// point count at 2) lets us update the line in place via MeshBuilder's
+// `instance` option instead of disposing + recreating a mesh on every pointer
+// move. Dash density no longer tracks length, which is an acceptable trade for
+// avoiding per-move geometry churn during the preview.
+const MEASURE_DASH_NB = 200;
+
+// Scratch objects reused by the per-frame measurement-label projection so the
+// render loop stays allocation-free (see performance guidance). Safe to share
+// at module scope: each is only read/written synchronously within a single
+// observable callback, and JS runs the render loop single-threaded.
+const s_measureMid = new Vector3();
+const s_measureScreen = new Vector3();
+const s_measureViewport = new BabylonViewport(0, 0, 0, 0);
+// Scratch quaternion reused by the reconcile pass to avoid a per-prim
+// allocation when syncing rotation from state (runs for every prim on every
+// `prims` change, including each drag tick).
+const s_reconcileQuat = new Quaternion();
 
 export default function Viewport({
   prims,
@@ -315,7 +335,6 @@ export default function Viewport({
     if (!canvas) return;
 
     const engine = new Engine(canvas, true, {
-      preserveDrawingBuffer: true,
       stencil: true,
       antialias: true
     });
@@ -334,7 +353,7 @@ export default function Viewport({
       Vector3.Zero(),
       scene
     );
-    camera.attachControl(canvas, true);
+    camera.attachControl(true);
     camera.lowerRadiusLimit = 1;
     camera.upperRadiusLimit = 5000;
     camera.wheelDeltaPercentage = 0.02;
@@ -710,25 +729,35 @@ export default function Viewport({
 
     const rebuildMeasureLine = () => {
       const { start, end } = measureRef.current;
-      if (measureLineRef.current) {
-        measureLineRef.current.dispose();
-        measureLineRef.current = null;
+      if (!start || !end) {
+        if (measureLineRef.current) {
+          measureLineRef.current.dispose();
+          measureLineRef.current = null;
+        }
+        return;
       }
-      if (!start || !end) return;
+      // Update the existing line in place via `instance` instead of
+      // disposing + recreating a mesh on every pointer move. Requires a
+      // fixed point count (always 2) and fixed dash count (MEASURE_DASH_NB).
+      const existing = measureLineRef.current;
       const line = MeshBuilder.CreateDashedLines(
         'measure-line',
         {
           points: [start, end],
           dashSize: 6,
           gapSize: 4,
-          dashNb: Math.max(20, Math.floor(Vector3.Distance(start, end) * 8))
+          dashNb: MEASURE_DASH_NB,
+          updatable: true,
+          instance: existing ?? undefined
         },
         scene
       );
-      line.color = new Color3(1, 0.84, 0.27);
-      line.isPickable = false;
-      line.renderingGroupId = 1;
-      measureLineRef.current = line;
+      if (!existing) {
+        line.color = new Color3(1, 0.84, 0.27);
+        line.isPickable = false;
+        line.renderingGroupId = 1;
+        measureLineRef.current = line;
+      }
     };
 
     const ensureMeasureMarkers = (): {
@@ -855,39 +884,37 @@ export default function Viewport({
       const label = measureLabelRef.current;
       if (!label) return;
       const { start, end } = measureRef.current;
-      if (!start || !end) {
-        label.style.display = 'none';
-        return;
-      }
-      const mid = Vector3.Center(start, end);
       const cam = cameraRef.current;
-      if (!cam) {
+      if (!start || !end || !cam) {
         label.style.display = 'none';
         return;
       }
+      Vector3.CenterToRef(start, end, s_measureMid);
       const rect = canvas.getBoundingClientRect();
-      const screen = Vector3.Project(
-        mid,
-        Matrix.Identity(),
+      cam.viewport.toGlobalToRef(rect.width, rect.height, s_measureViewport);
+      // *ToRef helpers + Matrix.IdentityReadOnly keep this per-frame
+      // projection allocation-free.
+      Vector3.ProjectToRef(
+        s_measureMid,
+        Matrix.IdentityReadOnly,
         scene.getTransformMatrix(),
-        cam.viewport.toGlobal(rect.width, rect.height)
+        s_measureViewport,
+        s_measureScreen
       );
       label.style.display = 'block';
-      label.style.left = `${screen.x}px`;
-      label.style.top = `${screen.y}px`;
-      const d = Vector3.Distance(start, end);
-      label.textContent = `${d.toFixed(2)} m`;
+      label.style.left = `${s_measureScreen.x}px`;
+      label.style.top = `${s_measureScreen.y}px`;
+      label.textContent = `${Vector3.Distance(start, end).toFixed(2)} m`;
     });
 
     engine.runRenderLoop(() => scene.render());
 
+    // A ResizeObserver on the canvas covers every size change — including
+    // window resizes — so a separate window "resize" listener is redundant.
+    // It also catches grid-layout changes (e.g. Scene Editor mode hiding the
+    // bottom palette) that resize the canvas without a window resize; the
+    // window-only path would miss those and leave the image stretched/skewed.
     const onResize = () => engine.resize();
-    window.addEventListener('resize', onResize);
-    // Babylon's built-in resize handling only listens to the window. When
-    // our grid layout changes (e.g. Scene Editor mode hiding the bottom
-    // palette) the canvas's client size changes without a window resize,
-    // so without this observer the engine keeps its old draw-buffer
-    // dimensions and the rendered image stretches/skews into the new box.
     const ro = new ResizeObserver(onResize);
     ro.observe(canvas);
 
@@ -937,7 +964,6 @@ export default function Viewport({
       canvas.removeEventListener('dragover', onDragOver);
       canvas.removeEventListener('drop', onDrop);
       canvas.removeEventListener('contextmenu', onCanvasContextMenu);
-      window.removeEventListener('resize', onResize);
       ro.disconnect();
       meshesRef.current.clear();
       baseColorsRef.current.clear();
@@ -1027,16 +1053,18 @@ export default function Viewport({
         mesh.position.set(prim.position[0], prim.position[1], prim.position[2]);
         // Drive rotation via quaternion only — the RotationGizmo writes to
         // rotationQuaternion, and a non-null quaternion takes precedence over
-        // mesh.rotation in Babylon's world-matrix composition.
-        const q = Quaternion.FromEulerAngles(
+        // mesh.rotation in Babylon's world-matrix composition. Compute into
+        // a shared scratch quaternion to avoid a per-prim allocation.
+        Quaternion.FromEulerAnglesToRef(
           prim.rotation[0],
           prim.rotation[1],
-          prim.rotation[2]
+          prim.rotation[2],
+          s_reconcileQuat
         );
         if (mesh.rotationQuaternion) {
-          mesh.rotationQuaternion.copyFrom(q);
+          mesh.rotationQuaternion.copyFrom(s_reconcileQuat);
         } else {
-          mesh.rotationQuaternion = q;
+          mesh.rotationQuaternion = s_reconcileQuat.clone();
         }
         mesh.scaling.set(prim.scale[0], prim.scale[1], prim.scale[2]);
       } else if (!mesh.rotationQuaternion) {
@@ -1536,13 +1564,10 @@ function getOrLoadAssetContainer(
   let pending = cache.get(cacheKey);
   if (pending) return pending;
   pending = (async () => {
-    const container = await SceneLoader.LoadAssetContainerAsync(
+    const container = await LoadAssetContainerAsync(fileName, scene, {
       rootUrl,
-      fileName,
-      scene,
-      null,
       pluginExtension
-    );
+    });
     // Sanitize ONCE on the cached template. Clones share materials
     // (cloneMaterials=false) so this fix-up flows to every instance.
     // createNormals modifies the source Geometry, which is also shared
