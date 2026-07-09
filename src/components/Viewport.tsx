@@ -1560,7 +1560,15 @@ function makeInstanceSource(
   const src = buildPrimitiveGeometry(kind, `__src-${kind}-${tag}`, scene);
   const mat = new StandardMaterial(`__srcmat-${kind}-${tag}`, scene);
   mat.specularColor = new Color3(0.15, 0.15, 0.15);
-  if (transparent) mat.transparencyMode = Material.MATERIAL_ALPHABLEND;
+  if (transparent) {
+    mat.transparencyMode = Material.MATERIAL_ALPHABLEND;
+    // The per-instance `color` buffer carries RGBA, but StandardMaterial only
+    // multiplies the fragment alpha by the instance color's alpha channel when
+    // the VERTEXALPHA shader define is active — which is driven by the source
+    // mesh's `hasVertexAlpha`. Without this the alpha channel is dropped and
+    // every instance renders opaque regardless of its prim's transparency.
+    src.hasVertexAlpha = true;
+  }
   src.material = mat;
   // Per-instance RGBA color. StandardMaterial picks this up automatically once
   // the mesh has instances (the INSTANCESCOLOR shader define).
